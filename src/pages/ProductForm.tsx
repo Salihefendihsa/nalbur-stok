@@ -1,64 +1,305 @@
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Save } from 'lucide-react'
 import Header from '@/components/layout/Header'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import { useProduct, useCreateProduct, useUpdateProduct, type ProductInput } from '@/lib/queries/products'
+import { useCategories } from '@/lib/queries/categories'
+import { useSuppliers } from '@/lib/queries/suppliers'
+import { useToast } from '@/store/toast'
+
+const EMPTY: ProductInput = {
+  sku: '',
+  barcode: null,
+  name: '',
+  description: null,
+  category_id: null,
+  supplier_id: null,
+  unit: 'adet',
+  current_stock: 0,
+  min_stock: 0,
+  purchase_price: 0,
+  sale_price: 0,
+  vat_rate: 20,
+  is_active: true,
+}
 
 export default function ProductForm() {
   const navigate = useNavigate()
+  const { id } = useParams<{ id: string }>()
+  const isEdit = !!id
+  const toast = useToast()
+
+  const { data: existing, isLoading: loadingProduct } = useProduct(id ?? '')
+  const { data: categories = [] } = useCategories()
+  const { data: suppliers = [] } = useSuppliers()
+  const createMutation = useCreateProduct()
+  const updateMutation = useUpdateProduct()
+
+  const [form, setForm] = useState<ProductInput>(EMPTY)
+  const [errors, setErrors] = useState<Partial<Record<keyof ProductInput, string>>>({})
+
+  useEffect(() => {
+    if (existing) {
+      setForm({
+        sku: existing.sku,
+        barcode: existing.barcode,
+        name: existing.name,
+        description: existing.description,
+        category_id: existing.category_id,
+        supplier_id: existing.supplier_id,
+        unit: existing.unit,
+        current_stock: existing.current_stock,
+        min_stock: existing.min_stock,
+        purchase_price: existing.purchase_price,
+        sale_price: existing.sale_price,
+        vat_rate: existing.vat_rate,
+        is_active: existing.is_active,
+      })
+    }
+  }, [existing])
+
+  function set<K extends keyof ProductInput>(key: K, value: ProductInput[K]) {
+    setForm((prev) => ({ ...prev, [key]: value }))
+    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }))
+  }
+
+  function validate(): boolean {
+    const e: Partial<Record<keyof ProductInput, string>> = {}
+    if (!form.sku.trim()) e.sku = 'SKU zorunludur'
+    if (!form.name.trim()) e.name = 'Ürün adı zorunludur'
+    setErrors(e)
+    return Object.keys(e).length === 0
+  }
+
+  async function handleSubmit() {
+    if (!validate()) return
+    try {
+      if (isEdit && id) {
+        await updateMutation.mutateAsync({ id, ...form })
+        toast.success('Ürün güncellendi.')
+        navigate(`/urunler/${id}`)
+      } else {
+        const product = await createMutation.mutateAsync(form)
+        toast.success('Ürün oluşturuldu.')
+        navigate(`/urunler/${product.id}`)
+      }
+    } catch (err) {
+      toast.error((err as Error).message)
+    }
+  }
+
+  const isPending = createMutation.isPending || updateMutation.isPending
+
+  if (isEdit && loadingProduct) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <Header title="Ürün Düzenle" />
+        <div style={{ padding: '1.5rem', maxWidth: '680px' }}>
+          <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="skeleton" style={{ height: '38px', borderRadius: '0.5rem' }} />
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const rootCategories = categories.filter((c) => c.parent_id === null)
+  const childCategories = categories.filter((c) => c.parent_id !== null)
 
   return (
-    <div className="flex flex-col">
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
       <Header
-        title="Yeni Ürün"
+        title={isEdit ? 'Ürün Düzenle' : 'Yeni Ürün'}
         actions={
           <>
             <Button variant="secondary" size="sm" onClick={() => navigate(-1)}>
               <ArrowLeft className="w-3.5 h-3.5" />
               İptal
             </Button>
-            <Button size="sm">
+            <Button size="sm" loading={isPending} onClick={handleSubmit}>
               <Save className="w-3.5 h-3.5" />
-              Kaydet
+              {isEdit ? 'Güncelle' : 'Kaydet'}
             </Button>
           </>
         }
       />
-      <div className="p-6">
-        <div className="max-w-2xl space-y-6">
-          <div className="card p-6 space-y-4">
-            <h3 className="text-sm font-semibold text-gray-900">Temel Bilgiler</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <Input label="SKU *" placeholder="Örn: NLB-001" />
-              <Input label="Barkod" placeholder="EAN13 veya özel" />
+
+      <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
+        <div style={{ maxWidth: '680px', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+
+          {/* Temel Bilgiler */}
+          <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <h3 style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>Temel Bilgiler</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <Input
+                label="SKU *"
+                placeholder="Örn: NLB-001"
+                value={form.sku}
+                onChange={(e) => set('sku', e.target.value)}
+                error={errors.sku}
+              />
+              <Input
+                label="Barkod"
+                placeholder="EAN13 veya özel"
+                value={form.barcode ?? ''}
+                onChange={(e) => set('barcode', e.target.value || null)}
+              />
             </div>
-            <Input label="Ürün Adı *" placeholder="Ürün adını girin" />
+            <Input
+              label="Ürün Adı *"
+              placeholder="Ürün adını girin"
+              value={form.name}
+              onChange={(e) => set('name', e.target.value)}
+              error={errors.name}
+            />
             <div>
-              <label className="text-xs font-medium text-gray-700 block mb-1">Açıklama</label>
-              <textarea className="input resize-none" rows={3} placeholder="Ürün açıklaması..." />
+              <label style={{ fontSize: '0.75rem', fontWeight: 500, color: '#334155', display: 'block', marginBottom: '0.25rem' }}>
+                Açıklama
+              </label>
+              <textarea
+                className="input"
+                style={{ resize: 'none' }}
+                rows={3}
+                placeholder="Ürün açıklaması…"
+                value={form.description ?? ''}
+                onChange={(e) => set('description', e.target.value || null)}
+              />
             </div>
           </div>
 
-          <div className="card p-6 space-y-4">
-            <h3 className="text-sm font-semibold text-gray-900">Stok & Fiyat</h3>
-            <div className="grid grid-cols-3 gap-4">
-              <Input label="Mevcut Stok" type="number" placeholder="0" />
-              <Input label="Minimum Stok" type="number" placeholder="0" />
-              <Input label="Birim" placeholder="adet" />
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <Input label="Alış Fiyatı (₺)" type="number" placeholder="0.00" />
-              <Input label="Satış Fiyatı (₺)" type="number" placeholder="0.00" />
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-gray-700">KDV Oranı</label>
-                <select className="input" defaultValue="20">
-                  <option value="0">%0</option>
-                  <option value="10">%10</option>
-                  <option value="20">%20</option>
+          {/* Kategori & Tedarikçi */}
+          <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <h3 style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>Sınıflandırma</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 500, color: '#334155', display: 'block', marginBottom: '0.25rem' }}>
+                  Kategori
+                </label>
+                {categories.length === 0 ? (
+                  <p style={{ fontSize: '0.8125rem', color: '#94a3b8' }}>
+                    Henüz kategori yok.{' '}
+                    <Link to="/kategoriler" style={{ color: 'var(--color-primary-500)', textDecoration: 'none' }}>
+                      Kategori ekle →
+                    </Link>
+                  </p>
+                ) : (
+                  <select
+                    className="input"
+                    value={form.category_id ?? ''}
+                    onChange={(e) => set('category_id', e.target.value || null)}
+                  >
+                    <option value="">— Seçiniz —</option>
+                    {rootCategories.map((c) => (
+                      <optgroup key={c.id} label={c.name}>
+                        <option value={c.id}>{c.name}</option>
+                        {childCategories.filter((ch) => ch.parent_id === c.id).map((ch) => (
+                          <option key={ch.id} value={ch.id}>{'  '}↳ {ch.name}</option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                )}
+              </div>
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 500, color: '#334155', display: 'block', marginBottom: '0.25rem' }}>
+                  Tedarikçi
+                </label>
+                <select
+                  className="input"
+                  value={form.supplier_id ?? ''}
+                  onChange={(e) => set('supplier_id', e.target.value || null)}
+                >
+                  <option value="">— Seçiniz —</option>
+                  {suppliers.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
                 </select>
               </div>
             </div>
           </div>
+
+          {/* Stok & Fiyat */}
+          <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <h3 style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>Stok & Fiyat</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+              <Input
+                label="Mevcut Stok"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.current_stock}
+                onChange={(e) => set('current_stock', parseFloat(e.target.value) || 0)}
+              />
+              <Input
+                label="Minimum Stok"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.min_stock}
+                onChange={(e) => set('min_stock', parseFloat(e.target.value) || 0)}
+              />
+              <Input
+                label="Birim"
+                placeholder="adet"
+                value={form.unit}
+                onChange={(e) => set('unit', e.target.value)}
+              />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+              <Input
+                label="Alış Fiyatı (₺)"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.purchase_price}
+                onChange={(e) => set('purchase_price', parseFloat(e.target.value) || 0)}
+              />
+              <Input
+                label="Satış Fiyatı (₺)"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.sale_price}
+                onChange={(e) => set('sale_price', parseFloat(e.target.value) || 0)}
+              />
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 500, color: '#334155', display: 'block', marginBottom: '0.25rem' }}>
+                  KDV Oranı
+                </label>
+                <select
+                  className="input"
+                  value={form.vat_rate}
+                  onChange={(e) => set('vat_rate', parseInt(e.target.value))}
+                >
+                  <option value={0}>%0</option>
+                  <option value={10}>%10</option>
+                  <option value={20}>%20</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Durum */}
+          <div className="card" style={{ padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 500, color: '#0f172a' }}>Ürün Aktif</p>
+              <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>Pasif ürünler satış ve stok listelerinde gösterilmez</p>
+            </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={form.is_active}
+                onChange={(e) => set('is_active', e.target.checked)}
+                style={{ width: '1rem', height: '1rem', accentColor: 'var(--color-primary-500)', cursor: 'pointer' }}
+              />
+              <span style={{ fontSize: '0.875rem', color: '#334155' }}>{form.is_active ? 'Aktif' : 'Pasif'}</span>
+            </label>
+          </div>
+
         </div>
       </div>
     </div>
