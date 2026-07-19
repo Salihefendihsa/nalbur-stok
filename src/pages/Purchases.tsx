@@ -1,6 +1,7 @@
-import { Plus } from 'lucide-react'
+import { Plus, ArrowDownToLine } from 'lucide-react'
 import Header from '@/components/layout/Header'
 import Button from '@/components/ui/Button'
+import EmptyState from '@/components/ui/EmptyState'
 
 export default function Purchases() {
   return (
@@ -16,8 +17,12 @@ export default function Purchases() {
         }
       />
       <div className="p-6">
-        <div className="card p-8 text-center text-gray-400">
-          <p>Alış kayıtları Supabase bağlantısı kurulduktan sonra görüntülenecek.</p>
+        <div className="card flex">
+          <EmptyState
+            icon={ArrowDownToLine}
+            title="Henüz alış kaydı yok"
+            description="Tedarikçilerden yapılan alışları burada takip edin."
+          />
         </div>
       </div>
     </div>

@@ -35,14 +35,14 @@ export default function Table<T>({
   onRowClick,
 }: TableProps<T>) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+    <div className="overflow-x-auto max-h-[70vh] overflow-y-auto rounded-xl">
+      <table className="w-full text-sm table-sticky-head">
         <thead>
           <tr className="border-b border-gray-200">
             {columns.map((col) => (
               <th
                 key={col.key}
-                className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-white"
                 style={col.width ? { width: col.width } : undefined}
               >
                 {col.header}
@@ -66,7 +66,7 @@ export default function Table<T>({
               <tr
                 key={keyExtractor(row)}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
-                className={onRowClick ? 'cursor-pointer hover:bg-gray-50 transition-colors' : ''}
+                className={`table-row-alt table-row-hover transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
               >
                 {columns.map((col) => (
                   <td key={col.key} className="px-4 py-3 text-gray-700">

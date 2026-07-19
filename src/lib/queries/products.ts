@@ -39,6 +39,19 @@ export function useProducts(search = '') {
   })
 }
 
+export function useProductCount() {
+  return useQuery({
+    queryKey: ['products', 'count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+      if (error) throw new Error(error.message)
+      return count ?? 0
+    },
+  })
+}
+
 export function useProduct(id: string) {
   return useQuery({
     queryKey: ['products', 'detail', id],

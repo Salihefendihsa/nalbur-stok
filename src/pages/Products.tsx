@@ -1,16 +1,23 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { Plus, Search, AlertCircle } from 'lucide-react'
+import { Plus, Search, AlertCircle, PackageSearch } from 'lucide-react'
 import Header from '@/components/layout/Header'
 import Button from '@/components/ui/Button'
+import EmptyState from '@/components/ui/EmptyState'
 import { useProducts } from '@/lib/queries/products'
 import { useDebounce } from '@/hooks/useDebounce'
 import type { Product } from '@/types/database'
 import { formatCurrency, formatStock } from '@/utils/format'
 
 const ROW_H = 56
-const COLS = '100px 1fr 120px 130px 130px 72px'
+const COLS = '100px 1fr 120px 130px 130px 110px'
+
+function stockStatus(p: Product): { label: string; className: string } {
+  if (p.current_stock <= p.min_stock) return { label: 'Kritik', className: 'badge-red' }
+  if (p.current_stock <= p.min_stock * 2) return { label: 'Normal', className: 'badge-yellow' }
+  return { label: 'Yüksek', className: 'badge-green' }
+}
 
 export default function Products() {
   const navigate = useNavigate()
@@ -89,22 +96,28 @@ export default function Products() {
                   <div className="skeleton" style={{ height: '14px', width: '70px' }} />
                   <div className="skeleton" style={{ height: '14px', width: '80px' }} />
                   <div className="skeleton" style={{ height: '14px', width: '80px' }} />
-                  <div className="skeleton" style={{ height: '20px', width: '48px', borderRadius: '0.375rem' }} />
+                  <div className="skeleton" style={{ height: '20px', width: '60px', borderRadius: '0.375rem' }} />
                 </div>
               ))}
             </div>
           ) : data.length === 0 ? (
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', color: '#94a3b8' }}>
-              <p style={{ fontSize: '0.875rem' }}>
-                {debouncedSearch ? 'Aramanızla eşleşen ürün bulunamadı.' : 'Henüz ürün eklenmemiş.'}
-              </p>
-              {!debouncedSearch && (
-                <Button size="sm" onClick={() => navigate('/urunler/yeni')}>
-                  <Plus className="w-3.5 h-3.5" />
-                  İlk ürünü ekle
-                </Button>
-              )}
-            </div>
+            <EmptyState
+              icon={PackageSearch}
+              title={debouncedSearch ? 'Aramanızla eşleşen ürün bulunamadı.' : 'Henüz ürün eklenmemiş.'}
+              description={
+                debouncedSearch
+                  ? 'Farklı bir arama terimi deneyin.'
+                  : 'İlk ürününüzü ekleyerek stok takibine başlayın.'
+              }
+              action={
+                !debouncedSearch ? (
+                  <Button size="sm" onClick={() => navigate('/urunler/yeni')}>
+                    <Plus className="w-3.5 h-3.5" />
+                    İlk ürünü ekle
+                  </Button>
+                ) : undefined
+              }
+            />
           ) : (
             <div ref={parentRef} style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
               <div style={{ height: totalSize, position: 'relative' }}>
@@ -116,6 +129,7 @@ export default function Products() {
                       product={p}
                       top={vRow.start}
                       height={ROW_H}
+                      alt={vRow.index % 2 === 1}
                       onClick={() => navigate(`/urunler/${p.id}`)}
                     />
                   )
@@ -140,10 +154,12 @@ interface ProductRowProps {
   product: Product
   top: number
   height: number
+  alt: boolean
   onClick: () => void
 }
 
-function ProductRow({ product: p, top, height, onClick }: ProductRowProps) {
+function ProductRow({ product: p, top, height, alt, onClick }: ProductRowProps) {
+  const status = stockStatus(p)
   return (
     <div
       onClick={onClick}
@@ -153,11 +169,12 @@ function ProductRow({ product: p, top, height, onClick }: ProductRowProps) {
         display: 'grid', gridTemplateColumns: COLS,
         alignItems: 'center', padding: '0 1rem',
         borderBottom: '1px solid #f8fafc',
+        backgroundColor: alt ? '#f8fafc' : '#fff',
         cursor: 'pointer',
         transition: 'background-color 100ms',
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
-      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '')}
+      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#fff7ed')}
+      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = alt ? '#f8fafc' : '#fff')}
     >
       <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: '#94a3b8' }}>{p.sku}</span>
       <div style={{ minWidth: 0 }}>
@@ -173,9 +190,7 @@ function ProductRow({ product: p, top, height, onClick }: ProductRowProps) {
       </span>
       <span style={{ fontSize: '0.875rem', color: '#334155' }}>{formatCurrency(p.sale_price)}</span>
       <span style={{ fontSize: '0.875rem', color: '#64748b' }}>{formatCurrency(p.purchase_price)}</span>
-      <span className={p.is_active ? 'badge-green' : 'badge-gray'}>
-        {p.is_active ? 'Aktif' : 'Pasif'}
-      </span>
+      <span className={status.className}>{status.label}</span>
     </div>
   )
 }

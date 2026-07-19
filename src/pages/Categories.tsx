@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Plus, Edit2, Trash2, AlertTriangle, ChevronRight } from 'lucide-react'
+import { Plus, Edit2, Trash2, AlertTriangle, ChevronRight, Tag } from 'lucide-react'
 import Header from '@/components/layout/Header'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
+import EmptyState from '@/components/ui/EmptyState'
 import {
   useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory,
   type CategoryInput,
@@ -111,9 +112,13 @@ export default function Categories() {
             Yükleme hatası: {(error as Error).message}
           </div>
         ) : categories.length === 0 ? (
-          <div className="card" style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>
-            <p style={{ margin: '0 0 1rem', fontSize: '0.875rem' }}>Henüz kategori eklenmemiş.</p>
-            <Button size="sm" onClick={openCreate}><Plus className="w-3.5 h-3.5" /> İlk kategoriyi ekle</Button>
+          <div className="card flex">
+            <EmptyState
+              icon={Tag}
+              title="Henüz kategori eklenmemiş."
+              description="Ürünlerinizi gruplamak için ilk kategorinizi oluşturun."
+              action={<Button size="sm" onClick={openCreate}><Plus className="w-3.5 h-3.5" /> İlk kategoriyi ekle</Button>}
+            />
           </div>
         ) : (
           <div className="card">

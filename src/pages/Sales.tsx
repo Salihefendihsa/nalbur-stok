@@ -1,6 +1,7 @@
-import { Plus } from 'lucide-react'
+import { Plus, ShoppingCart } from 'lucide-react'
 import Header from '@/components/layout/Header'
 import Button from '@/components/ui/Button'
+import EmptyState from '@/components/ui/EmptyState'
 
 export default function Sales() {
   return (
@@ -16,8 +17,12 @@ export default function Sales() {
         }
       />
       <div className="p-6">
-        <div className="card p-8 text-center text-gray-400">
-          <p>Satış kayıtları Supabase bağlantısı kurulduktan sonra görüntülenecek.</p>
+        <div className="card flex">
+          <EmptyState
+            icon={ShoppingCart}
+            title="Henüz satış kaydı yok"
+            description="Yeni satış oluşturarak işlem geçmişinizi burada görüntüleyin."
+          />
         </div>
       </div>
     </div>
