@@ -4,6 +4,7 @@ export interface Category {
   parent_id: string | null
   sort_order: number
   created_at: string
+  deleted_at: string | null
 }
 
 export interface Supplier {
@@ -15,6 +16,7 @@ export interface Supplier {
   tax_no: string | null
   notes: string | null
   created_at: string
+  deleted_at: string | null
 }
 
 export interface Product {
@@ -35,6 +37,7 @@ export interface Product {
   is_active: boolean
   created_at: string
   updated_at: string
+  deleted_at: string | null
   category?: Category
   supplier?: Supplier
 }
@@ -54,6 +57,7 @@ export interface StockMovement {
   stock_after: number | null
   note: string | null
   created_at: string
+  deleted_at: string | null
   product?: Product
 }
 
@@ -64,6 +68,7 @@ export interface Purchase {
   total: number
   notes: string | null
   created_at: string
+  deleted_at: string | null
   supplier?: Supplier
   items?: PurchaseItem[]
 }
@@ -87,6 +92,7 @@ export interface Sale {
   total: number
   notes: string | null
   created_at: string
+  deleted_at: string | null
   items?: SaleItem[]
 }
 

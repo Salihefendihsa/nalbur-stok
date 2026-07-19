@@ -1,14 +1,16 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { Plus, Search, AlertCircle, PackageSearch } from 'lucide-react'
+import { Plus, Search, AlertCircle, PackageSearch, Archive } from 'lucide-react'
 import Header from '@/components/layout/Header'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
-import { useProducts } from '@/lib/queries/products'
+import DeletedItemsModal from '@/components/ui/DeletedItemsModal'
+import { useProducts, useDeletedProducts, useRestoreProduct } from '@/lib/queries/products'
 import { useDebounce } from '@/hooks/useDebounce'
+import { useToast } from '@/store/toast'
 import type { Product } from '@/types/database'
-import { formatCurrency, formatStock } from '@/utils/format'
+import { formatCurrency, formatDate, formatStock } from '@/utils/format'
 
 const ROW_H = 56
 const COLS = '100px 1fr 120px 130px 130px 110px'
@@ -21,9 +23,27 @@ function stockStatus(p: Product): { label: string; className: string } {
 
 export default function Products() {
   const navigate = useNavigate()
+  const toast = useToast()
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebounce(search, 300)
   const { data = [], isLoading, error } = useProducts(debouncedSearch)
+
+  const [deletedOpen, setDeletedOpen] = useState(false)
+  const [restoringId, setRestoringId] = useState<string | null>(null)
+  const { data: deletedProducts = [], isLoading: loadingDeleted } = useDeletedProducts(deletedOpen)
+  const restoreMutation = useRestoreProduct()
+
+  async function handleRestore(p: Product) {
+    setRestoringId(p.id)
+    try {
+      await restoreMutation.mutateAsync(p.id)
+      toast.success(`"${p.name}" geri yüklendi.`)
+    } catch (err) {
+      toast.error((err as Error).message)
+    } finally {
+      setRestoringId(null)
+    }
+  }
 
   const parentRef = useRef<HTMLDivElement>(null)
   const virtualizer = useVirtualizer({
@@ -45,10 +65,19 @@ export default function Products() {
             : `${data.length} ürün${debouncedSearch ? ' (filtrelenmiş)' : ''}`
         }
         actions={
-          <Button size="sm" onClick={() => navigate('/urunler/yeni')}>
-            <Plus className="w-3.5 h-3.5" />
-            Yeni Ürün
-          </Button>
+          <>
+            <button
+              onClick={() => setDeletedOpen(true)}
+              title="Silinenler"
+              className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors"
+            >
+              <Archive className="w-3.5 h-3.5" />
+            </button>
+            <Button size="sm" onClick={() => navigate('/urunler/yeni')}>
+              <Plus className="w-3.5 h-3.5" />
+              Yeni Ürün
+            </Button>
+          </>
         }
       />
 
@@ -146,6 +175,25 @@ export default function Products() {
           )}
         </div>
       </div>
+
+      <DeletedItemsModal
+        open={deletedOpen}
+        onClose={() => setDeletedOpen(false)}
+        title="Silinen Ürünler"
+        items={deletedProducts}
+        isLoading={loadingDeleted}
+        keyExtractor={(p) => p.id}
+        restoringId={restoringId}
+        onRestore={handleRestore}
+        renderItem={(p) => (
+          <div>
+            <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>{p.name}</p>
+            <p style={{ margin: 0, fontSize: '0.75rem', color: '#94a3b8' }}>
+              SKU: {p.sku} · Silinme: {p.deleted_at ? formatDate(p.deleted_at) : '—'}
+            </p>
+          </div>
+        )}
+      />
     </div>
   )
 }

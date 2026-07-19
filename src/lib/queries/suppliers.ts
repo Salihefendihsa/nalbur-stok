@@ -18,10 +18,27 @@ export function useSuppliers() {
       const { data, error } = await supabase
         .from('suppliers')
         .select('*')
+        .is('deleted_at', null)
         .order('name')
       if (error) throw new Error(error.message)
       return (data ?? []) as Supplier[]
     },
+  })
+}
+
+export function useDeletedSuppliers(enabled = true) {
+  return useQuery({
+    queryKey: ['suppliers', 'deleted'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('suppliers')
+        .select('*')
+        .not('deleted_at', 'is', null)
+        .order('deleted_at', { ascending: false })
+      if (error) throw new Error(error.message)
+      return (data ?? []) as Supplier[]
+    },
+    enabled,
   })
 }
 
@@ -62,7 +79,24 @@ export function useDeleteSupplier() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('suppliers').delete().eq('id', id)
+      const { error } = await supabase
+        .from('suppliers')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', id)
+      if (error) throw new Error(error.message)
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['suppliers'] }),
+  })
+}
+
+export function useRestoreSupplier() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('suppliers')
+        .update({ deleted_at: null })
+        .eq('id', id)
       if (error) throw new Error(error.message)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['suppliers'] }),

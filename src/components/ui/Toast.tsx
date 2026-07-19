@@ -36,6 +36,21 @@ export default function ToastContainer() {
           <p style={{ fontSize: '0.875rem', color: '#1e293b', flex: 1, lineHeight: '1.4', margin: 0 }}>
             {t.message}
           </p>
+          {t.action && (
+            <button
+              onClick={() => {
+                t.action!.onClick()
+                remove(t.id)
+              }}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                color: 'var(--color-primary-600)', fontSize: '0.8125rem', fontWeight: 600,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {t.action.label}
+            </button>
+          )}
           <button
             onClick={() => remove(t.id)}
             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#94a3b8', display: 'flex' }}

@@ -25,6 +25,7 @@ export function useProducts(search = '') {
       let q = supabase
         .from('products')
         .select('*, category:categories(id,name), supplier:suppliers(id,name)')
+        .is('deleted_at', null)
         .order('name')
         .limit(2000)
       if (search.trim()) {
@@ -39,6 +40,22 @@ export function useProducts(search = '') {
   })
 }
 
+export function useDeletedProducts(enabled = true) {
+  return useQuery({
+    queryKey: ['products', 'deleted'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*, category:categories(id,name), supplier:suppliers(id,name)')
+        .not('deleted_at', 'is', null)
+        .order('deleted_at', { ascending: false })
+      if (error) throw new Error(error.message)
+      return (data ?? []) as Product[]
+    },
+    enabled,
+  })
+}
+
 export function useProductCount() {
   return useQuery({
     queryKey: ['products', 'count'],
@@ -46,6 +63,7 @@ export function useProductCount() {
       const { count, error } = await supabase
         .from('products')
         .select('*', { count: 'exact', head: true })
+        .is('deleted_at', null)
       if (error) throw new Error(error.message)
       return count ?? 0
     },
@@ -105,7 +123,24 @@ export function useDeleteProduct() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('products').delete().eq('id', id)
+      const { error } = await supabase
+        .from('products')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', id)
+      if (error) throw new Error(error.message)
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['products'] }),
+  })
+}
+
+export function useRestoreProduct() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('products')
+        .update({ deleted_at: null })
+        .eq('id', id)
       if (error) throw new Error(error.message)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['products'] }),

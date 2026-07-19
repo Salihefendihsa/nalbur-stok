@@ -25,11 +25,17 @@ export function useDashboardData() {
         supabase
           .from('products')
           .select('*, category:categories(id,name)')
+          .is('deleted_at', null)
           .order('name'),
-        supabase.from('sales').select('total').gte('created_at', startOfTodayISO()),
+        supabase
+          .from('sales')
+          .select('total')
+          .is('deleted_at', null)
+          .gte('created_at', startOfTodayISO()),
         supabase
           .from('stock_movements')
           .select('*, product:products(id,name,unit)')
+          .is('deleted_at', null)
           .order('created_at', { ascending: false })
           .limit(6),
       ])

@@ -1,12 +1,14 @@
 import { useState } from 'react'
-import { Plus, Edit2, Trash2, AlertTriangle, ChevronRight, Tag } from 'lucide-react'
+import { Plus, Edit2, Trash2, AlertTriangle, ChevronRight, Tag, Archive } from 'lucide-react'
 import Header from '@/components/layout/Header'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
 import EmptyState from '@/components/ui/EmptyState'
+import DeletedItemsModal from '@/components/ui/DeletedItemsModal'
 import {
   useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory,
+  useDeletedCategories, useRestoreCategory,
   type CategoryInput,
 } from '@/lib/queries/categories'
 import { useToast } from '@/store/toast'
@@ -35,12 +37,16 @@ export default function Categories() {
   const createMutation = useCreateCategory()
   const updateMutation = useUpdateCategory()
   const deleteMutation = useDeleteCategory()
+  const restoreMutation = useRestoreCategory()
 
   const [formOpen, setFormOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Category | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null)
   const [form, setForm] = useState<CategoryInput>(EMPTY_INPUT)
   const [nameError, setNameError] = useState('')
+  const [deletedOpen, setDeletedOpen] = useState(false)
+  const [restoringId, setRestoringId] = useState<string | null>(null)
+  const { data: deletedCategories = [], isLoading: loadingDeleted } = useDeletedCategories(deletedOpen)
 
   function openCreate() {
     setEditTarget(null)
@@ -75,11 +81,31 @@ export default function Categories() {
   async function handleDelete() {
     if (!deleteTarget) return
     try {
-      await deleteMutation.mutateAsync(deleteTarget.id)
-      toast.success('Kategori silindi.')
+      const target = deleteTarget
+      await deleteMutation.mutateAsync(target.id)
+      toast.undo(`"${target.name}" silindi.`, async () => {
+        try {
+          await restoreMutation.mutateAsync(target.id)
+          toast.success('Kategori geri yüklendi.')
+        } catch (err) {
+          toast.error((err as Error).message)
+        }
+      })
       setDeleteTarget(null)
     } catch (err) {
       toast.error((err as Error).message)
+    }
+  }
+
+  async function handleRestore(cat: Category) {
+    setRestoringId(cat.id)
+    try {
+      await restoreMutation.mutateAsync(cat.id)
+      toast.success(`"${cat.name}" geri yüklendi.`)
+    } catch (err) {
+      toast.error((err as Error).message)
+    } finally {
+      setRestoringId(null)
     }
   }
 
@@ -93,10 +119,19 @@ export default function Categories() {
         title="Kategoriler"
         subtitle={`${categories.length} kategori`}
         actions={
-          <Button size="sm" onClick={openCreate}>
-            <Plus className="w-3.5 h-3.5" />
-            Yeni Kategori
-          </Button>
+          <>
+            <button
+              onClick={() => setDeletedOpen(true)}
+              title="Silinenler"
+              className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors"
+            >
+              <Archive className="w-3.5 h-3.5" />
+            </button>
+            <Button size="sm" onClick={openCreate}>
+              <Plus className="w-3.5 h-3.5" />
+              Yeni Kategori
+            </Button>
+          </>
         }
       />
 
@@ -214,6 +249,26 @@ export default function Categories() {
           </div>
         </div>
       </Modal>
+
+      {/* Deleted items */}
+      <DeletedItemsModal
+        open={deletedOpen}
+        onClose={() => setDeletedOpen(false)}
+        title="Silinen Kategoriler"
+        items={deletedCategories}
+        isLoading={loadingDeleted}
+        keyExtractor={(c) => c.id}
+        restoringId={restoringId}
+        onRestore={handleRestore}
+        renderItem={(c) => (
+          <div>
+            <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>{c.name}</p>
+            <p style={{ margin: 0, fontSize: '0.75rem', color: '#94a3b8' }}>
+              Silinme: {c.deleted_at ? formatDate(c.deleted_at) : '—'}
+            </p>
+          </div>
+        )}
+      />
     </div>
   )
 }

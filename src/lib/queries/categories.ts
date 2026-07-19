@@ -15,11 +15,28 @@ export function useCategories() {
       const { data, error } = await supabase
         .from('categories')
         .select('*')
+        .is('deleted_at', null)
         .order('sort_order')
         .order('name')
       if (error) throw new Error(error.message)
       return (data ?? []) as Category[]
     },
+  })
+}
+
+export function useDeletedCategories(enabled = true) {
+  return useQuery({
+    queryKey: ['categories', 'deleted'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .not('deleted_at', 'is', null)
+        .order('deleted_at', { ascending: false })
+      if (error) throw new Error(error.message)
+      return (data ?? []) as Category[]
+    },
+    enabled,
   })
 }
 
@@ -60,7 +77,24 @@ export function useDeleteCategory() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('categories').delete().eq('id', id)
+      const { error } = await supabase
+        .from('categories')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', id)
+      if (error) throw new Error(error.message)
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['categories'] }),
+  })
+}
+
+export function useRestoreCategory() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('categories')
+        .update({ deleted_at: null })
+        .eq('id', id)
       if (error) throw new Error(error.message)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['categories'] }),

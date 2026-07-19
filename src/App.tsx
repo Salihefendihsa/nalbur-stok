@@ -12,6 +12,7 @@ import Sales from '@/pages/Sales'
 import Purchases from '@/pages/Purchases'
 import Reports from '@/pages/Reports'
 import Settings from '@/pages/Settings'
+import UserGuide from '@/pages/UserGuide'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,6 +40,7 @@ export default function App() {
             <Route path="alis" element={<Purchases />} />
             <Route path="hareketler" element={<StockMovements />} />
             <Route path="raporlar" element={<Reports />} />
+            <Route path="kilavuz" element={<UserGuide />} />
             <Route path="ayarlar" element={<Settings />} />
           </Route>
         </Routes>

@@ -10,6 +10,7 @@ import {
   BarChart3,
   Settings,
   Wrench,
+  BookOpen,
 } from 'lucide-react'
 import { useProductCount } from '@/lib/queries/products'
 
@@ -22,6 +23,7 @@ const navItems = [
   { to: '/alis', label: 'Alış', icon: ArrowDownToLine },
   { to: '/hareketler', label: 'Hareketler', icon: ArrowRightLeft },
   { to: '/raporlar', label: 'Raporlar', icon: BarChart3 },
+  { to: '/kilavuz', label: 'Kullanım Kılavuzu', icon: BookOpen },
   { to: '/ayarlar', label: 'Ayarlar', icon: Settings },
 ]
 

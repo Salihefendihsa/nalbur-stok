@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { Plus, Edit2, Trash2, AlertTriangle, Phone, Mail, MapPin } from 'lucide-react'
+import { Plus, Edit2, Trash2, AlertTriangle, Phone, Mail, MapPin, Archive } from 'lucide-react'
 import Header from '@/components/layout/Header'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
+import DeletedItemsModal from '@/components/ui/DeletedItemsModal'
 import {
   useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier,
+  useDeletedSuppliers, useRestoreSupplier,
   type SupplierInput,
 } from '@/lib/queries/suppliers'
 import { useToast } from '@/store/toast'
@@ -31,12 +33,16 @@ export default function Suppliers() {
   const createMutation = useCreateSupplier()
   const updateMutation = useUpdateSupplier()
   const deleteMutation = useDeleteSupplier()
+  const restoreMutation = useRestoreSupplier()
 
   const [formOpen, setFormOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Supplier | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Supplier | null>(null)
   const [form, setForm] = useState<SupplierInput>(EMPTY_INPUT)
   const [nameError, setNameError] = useState('')
+  const [deletedOpen, setDeletedOpen] = useState(false)
+  const [restoringId, setRestoringId] = useState<string | null>(null)
+  const { data: deletedSuppliers = [], isLoading: loadingDeleted } = useDeletedSuppliers(deletedOpen)
 
   function openCreate() {
     setEditTarget(null)
@@ -71,11 +77,31 @@ export default function Suppliers() {
   async function handleDelete() {
     if (!deleteTarget) return
     try {
-      await deleteMutation.mutateAsync(deleteTarget.id)
-      toast.success('Tedarikçi silindi.')
+      const target = deleteTarget
+      await deleteMutation.mutateAsync(target.id)
+      toast.undo(`"${target.name}" silindi.`, async () => {
+        try {
+          await restoreMutation.mutateAsync(target.id)
+          toast.success('Tedarikçi geri yüklendi.')
+        } catch (err) {
+          toast.error((err as Error).message)
+        }
+      })
       setDeleteTarget(null)
     } catch (err) {
       toast.error((err as Error).message)
+    }
+  }
+
+  async function handleRestore(s: Supplier) {
+    setRestoringId(s.id)
+    try {
+      await restoreMutation.mutateAsync(s.id)
+      toast.success(`"${s.name}" geri yüklendi.`)
+    } catch (err) {
+      toast.error((err as Error).message)
+    } finally {
+      setRestoringId(null)
     }
   }
 
@@ -87,10 +113,19 @@ export default function Suppliers() {
         title="Tedarikçiler"
         subtitle={`${suppliers.length} tedarikçi`}
         actions={
-          <Button size="sm" onClick={openCreate}>
-            <Plus className="w-3.5 h-3.5" />
-            Yeni Tedarikçi
-          </Button>
+          <>
+            <button
+              onClick={() => setDeletedOpen(true)}
+              title="Silinenler"
+              className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors"
+            >
+              <Archive className="w-3.5 h-3.5" />
+            </button>
+            <Button size="sm" onClick={openCreate}>
+              <Plus className="w-3.5 h-3.5" />
+              Yeni Tedarikçi
+            </Button>
+          </>
         }
       />
 
@@ -269,6 +304,26 @@ export default function Suppliers() {
           </div>
         </div>
       </Modal>
+
+      {/* Deleted items */}
+      <DeletedItemsModal
+        open={deletedOpen}
+        onClose={() => setDeletedOpen(false)}
+        title="Silinen Tedarikçiler"
+        items={deletedSuppliers}
+        isLoading={loadingDeleted}
+        keyExtractor={(s) => s.id}
+        restoringId={restoringId}
+        onRestore={handleRestore}
+        renderItem={(s) => (
+          <div>
+            <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>{s.name}</p>
+            <p style={{ margin: 0, fontSize: '0.75rem', color: '#94a3b8' }}>
+              Silinme: {s.deleted_at ? formatDate(s.deleted_at) : '—'}
+            </p>
+          </div>
+        )}
+      />
     </div>
   )
 }

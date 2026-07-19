@@ -4,7 +4,7 @@ import { ArrowLeft, Edit, Trash2, AlertTriangle, ArrowUpCircle, ArrowDownCircle,
 import Header from '@/components/layout/Header'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
-import { useProduct, useDeleteProduct } from '@/lib/queries/products'
+import { useProduct, useDeleteProduct, useRestoreProduct } from '@/lib/queries/products'
 import { useProductMovements } from '@/lib/queries/movements'
 import { useToast } from '@/store/toast'
 import { formatCurrency, formatDate, formatDateTime, formatStock } from '@/utils/format'
@@ -42,11 +42,21 @@ export default function ProductDetail() {
   const { data: product, isLoading, error } = useProduct(id ?? '')
   const { data: movements = [], isLoading: loadingMovements } = useProductMovements(id ?? '')
   const deleteMutation = useDeleteProduct()
+  const restoreMutation = useRestoreProduct()
 
   async function handleDelete() {
     try {
-      await deleteMutation.mutateAsync(id!)
-      toast.success('Ürün silindi.')
+      const productId = id!
+      const productName = product?.name ?? 'Ürün'
+      await deleteMutation.mutateAsync(productId)
+      toast.undo(`"${productName}" silindi.`, async () => {
+        try {
+          await restoreMutation.mutateAsync(productId)
+          toast.success('Ürün geri yüklendi.')
+        } catch (err) {
+          toast.error((err as Error).message)
+        }
+      })
       navigate('/urunler')
     } catch (err) {
       toast.error((err as Error).message)
