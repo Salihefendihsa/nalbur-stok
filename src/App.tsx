@@ -20,7 +20,22 @@ import UserGuide from '@/pages/UserGuide'
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 2,
+      // 2 dakika boyunca veriyi taze say → gereksiz arka plan isteği önler
+      staleTime:  1000 * 60 * 2,
+      // 10 dakika cache'te tut (sekme değişse bile) → hızlı geri dönüş
+      gcTime:     1000 * 60 * 10,
+      // Bağlantı hataları için üstel geri çekilme ile 2 yeniden deneme
+      retry: (failureCount, error) => {
+        // 4xx hatalarını yeniden deneme (geçersiz istek / yetkisiz)
+        if (error instanceof Error && error.message.includes('4')) return false
+        return failureCount < 2
+      },
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30_000),
+      // Sekmeye geri dönüldüğünde yeniden çek (stale ise)
+      refetchOnWindowFocus: true,
+    },
+    mutations: {
+      // Mutation hatalarında 1 yeniden deneme
       retry: 1,
     },
   },

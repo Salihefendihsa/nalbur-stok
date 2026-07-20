@@ -19,7 +19,7 @@ import { supabase } from '@/lib/supabase'
 import { useMobileNavStore } from '@/store/mobileNav'
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/', label: 'Ana Sayfa', icon: LayoutDashboard, end: true },
   { to: '/urunler', label: 'Ürünler', icon: Package, badge: 'products' as const },
   { to: '/kategoriler', label: 'Kategoriler', icon: Tag },
   { to: '/tedarikciler', label: 'Tedarikçiler', icon: Truck },

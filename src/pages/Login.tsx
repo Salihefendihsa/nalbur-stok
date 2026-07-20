@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { Wrench } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -7,11 +7,15 @@ import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 
 export default function Login() {
-  const session = useAuthStore((s) => s.session)
+  const { session, init } = useAuthStore()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    init()
+  }, [init])
 
   if (session) {
     return <Navigate to="/" replace />

@@ -33,7 +33,7 @@ export function useMovements() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('stock_movements')
-        .select('*, product:products(id,name,unit,current_stock)')
+        .select('*, product:products(id,name,sku,unit,current_stock)')
         .is('deleted_at', null)
         .order('created_at', { ascending: false })
         .limit(500)
@@ -49,7 +49,7 @@ export function useDeletedMovements(enabled = true) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('stock_movements')
-        .select('*, product:products(id,name,unit,current_stock)')
+        .select('*, product:products(id,name,sku,unit,current_stock)')
         .not('deleted_at', 'is', null)
         .order('deleted_at', { ascending: false })
       if (error) throw new Error(error.message)
