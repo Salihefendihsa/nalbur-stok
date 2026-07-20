@@ -5,13 +5,14 @@ import {
   ArrowUpCircle, ArrowDownCircle, RefreshCw,
   Search, Filter, X, Package, Building2,
   ShoppingCart, ArrowRight, ChevronDown,
-  TrendingDown, Clock,
+  TrendingDown, Clock, ScanLine,
 } from 'lucide-react'
 import Header from '@/components/layout/Header'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import EmptyState from '@/components/ui/EmptyState'
 import DeletedItemsModal from '@/components/ui/DeletedItemsModal'
+import BarcodeScanner from '@/components/ui/BarcodeScanner'
 import {
   useMovements, useCreateMovement, useUpdateMovement, useDeleteMovement,
   useDeletedMovements, useRestoreMovement,
@@ -164,6 +165,21 @@ export default function StockMovements() {
   const [deletedOpen, setDeletedOpen]   = useState(false)
   const [restoringId, setRestoringId]   = useState<string | null>(null)
   const { data: deletedMovements = [], isLoading: loadingDeleted } = useDeletedMovements(deletedOpen)
+
+  // — barkod tarama —
+  const [scannerOpen, setScannerOpen] = useState(false)
+
+  function handleScan(code: string) {
+    const product = products.find((p) => p.barcode === code)
+    if (product) {
+      setProductId(product.id)
+      toast.success(`"${product.name}" seçildi.`)
+    } else {
+      toast.errorWithAction('Bu barkodla kayıtlı ürün yok.', 'Yeni Ürün Ekle', () => {
+        navigate('/urunler/yeni', { state: { barcode: code } })
+      })
+    }
+  }
 
   // — tab —
   const [activeTab, setActiveTab] = useState<TabId>('movements')
@@ -781,12 +797,17 @@ export default function StockMovements() {
                 <label style={{ fontSize: '0.75rem', fontWeight: 500, color: '#334155', display: 'block', marginBottom: '0.25rem' }}>
                   Ürün *
                 </label>
-                <select className="input" value={productId} onChange={e => setProductId(e.target.value)}>
-                  <option value="">Ürün seçin…</option>
-                  {products.map(p => (
-                    <option key={p.id} value={p.id}>{p.name} ({formatStock(p.current_stock, p.unit)})</option>
-                  ))}
-                </select>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <select className="input" style={{ flex: 1, minWidth: 0 }} value={productId} onChange={e => setProductId(e.target.value)}>
+                    <option value="">Ürün seçin…</option>
+                    {products.map(p => (
+                      <option key={p.id} value={p.id}>{p.name} ({formatStock(p.current_stock, p.unit)})</option>
+                    ))}
+                  </select>
+                  <button type="button" onClick={() => setScannerOpen(true)} title="Barkod Tara" className="icon-btn shrink-0">
+                    <ScanLine style={{ width: '0.875rem', height: '0.875rem' }} />
+                  </button>
+                </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: '1rem' }}>
                 <div>
@@ -868,6 +889,12 @@ export default function StockMovements() {
             </p>
           </div>
         )}
+      />
+
+      <BarcodeScanner
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScan={code => { setScannerOpen(false); handleScan(code) }}
       />
     </div>
   )

@@ -1,12 +1,14 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { Plus, Search, AlertCircle, PackageSearch, Archive } from 'lucide-react'
+import { Plus, Search, AlertCircle, PackageSearch, Archive, ScanLine } from 'lucide-react'
 import Header from '@/components/layout/Header'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
 import DeletedItemsModal from '@/components/ui/DeletedItemsModal'
+import BarcodeScanner from '@/components/ui/BarcodeScanner'
 import { useProducts, useDeletedProducts, useRestoreProduct } from '@/lib/queries/products'
+import { findProductByBarcode } from '@/lib/barcode'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useToast } from '@/store/toast'
 import type { Product } from '@/types/database'
@@ -32,6 +34,21 @@ export default function Products() {
   const [restoringId, setRestoringId] = useState<string | null>(null)
   const { data: deletedProducts = [], isLoading: loadingDeleted } = useDeletedProducts(deletedOpen)
   const restoreMutation = useRestoreProduct()
+
+  const [scannerOpen, setScannerOpen] = useState(false)
+
+  async function handleScan(code: string) {
+    try {
+      const product = await findProductByBarcode(code)
+      if (product) {
+        navigate(`/urunler/${product.id}`)
+      } else {
+        navigate('/urunler/yeni', { state: { barcode: code } })
+      }
+    } catch (err) {
+      toast.error((err as Error).message)
+    }
+  }
 
   async function handleRestore(p: Product) {
     setRestoringId(p.id)
@@ -73,6 +90,10 @@ export default function Products() {
             >
               <Archive className="w-3.5 h-3.5" />
             </button>
+            <Button variant="secondary" size="sm" onClick={() => setScannerOpen(true)}>
+              <ScanLine className="w-3.5 h-3.5" />
+              Barkod Tara
+            </Button>
             <Button size="sm" onClick={() => navigate('/urunler/yeni')}>
               <Plus className="w-3.5 h-3.5" />
               Yeni Ürün
@@ -195,6 +216,12 @@ export default function Products() {
             </p>
           </div>
         )}
+      />
+
+      <BarcodeScanner
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScan={handleScan}
       />
     </div>
   )

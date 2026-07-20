@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   Plus, Edit2, Trash2, AlertTriangle, ArrowDownToLine, Archive,
   X, ChevronDown, ChevronRight, Package, Building2, Receipt,
-  CheckCircle2, TrendingDown, Calendar, Hash,
+  CheckCircle2, TrendingDown, Calendar, Hash, ScanLine,
 } from 'lucide-react'
 import Header from '@/components/layout/Header'
 import Button from '@/components/ui/Button'
@@ -12,6 +12,7 @@ import Input from '@/components/ui/Input'
 import EmptyState from '@/components/ui/EmptyState'
 import DeletedItemsModal from '@/components/ui/DeletedItemsModal'
 import SearchableSelect from '@/components/ui/SearchableSelect'
+import BarcodeScanner from '@/components/ui/BarcodeScanner'
 import {
   usePurchases, useAddPurchase, useUpdatePurchase, useDeletePurchase,
   useDeletedPurchases, useRestorePurchase,
@@ -226,6 +227,7 @@ function PurchaseDetailPanel({ purchase, onEdit, onDelete }: {
 // ─── main component ────────────────────────────────────────────────────────────
 export default function Purchases() {
   const toast = useToast()
+  const navigate = useNavigate()
   const { data: purchases = [], isLoading, error } = usePurchases()
   const { data: suppliers = [] } = useSuppliers()
   const { data: products = [] } = useProducts()
@@ -255,6 +257,23 @@ export default function Purchases() {
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
   // expanded detail row per group
   const [expandedRow, setExpandedRow] = useState<string | null>(null)
+  const [scannerOpen, setScannerOpen] = useState(false)
+
+  function handleScan(code: string) {
+    const product = products.find((p) => p.barcode === code)
+    if (product) {
+      const err = cartActions.addItem({
+        id: product.id, name: product.name, sku: product.sku, unitPrice: product.purchase_price,
+        taxRate: product.vat_rate, maxStock: Infinity, unit: product.unit, quantity: 1,
+      })
+      if (err) toast.error(err)
+      else toast.success(`"${product.name}" sepete eklendi.`)
+    } else {
+      toast.errorWithAction('Bu barkodla kayıtlı ürün yok.', 'Yeni Ürün Ekle', () => {
+        navigate('/urunler/yeni', { state: { barcode: code } })
+      })
+    }
+  }
 
   const groups = useMemo(() => {
     const map = new Map<string, { key: string; name: string; supplierId: string | null; purchases: Purchase[] }>()
@@ -611,23 +630,30 @@ export default function Purchases() {
               </>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <SearchableSelect
-                  value=""
-                  onChange={productId => {
-                    const p = products.find(prod => prod.id === productId)
-                    if (p) {
-                      // Purchase işleminde stok limitine takılmamak için maxStock Infinity veriyoruz
-                      const err = cartActions.addItem({
-                        id: p.id, name: p.name, sku: p.sku, unitPrice: p.purchase_price,
-                        taxRate: p.vat_rate, maxStock: Infinity, unit: p.unit, quantity: 1
-                      })
-                      if (err) toast.error(err)
-                    }
-                  }}
-                  placeholder="Barkod okut veya ürün ara..."
-                  emptyMessage="Ürün bulunamadı"
-                  options={products.map(p => ({ value: p.id, label: p.name, sublabel: `Stok: ${p.current_stock} ${p.unit} · Alış: ${formatCurrency(p.purchase_price)}` }))}
-                />
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <SearchableSelect
+                      value=""
+                      onChange={productId => {
+                        const p = products.find(prod => prod.id === productId)
+                        if (p) {
+                          // Purchase işleminde stok limitine takılmamak için maxStock Infinity veriyoruz
+                          const err = cartActions.addItem({
+                            id: p.id, name: p.name, sku: p.sku, unitPrice: p.purchase_price,
+                            taxRate: p.vat_rate, maxStock: Infinity, unit: p.unit, quantity: 1
+                          })
+                          if (err) toast.error(err)
+                        }
+                      }}
+                      placeholder="Barkod okut veya ürün ara..."
+                      emptyMessage="Ürün bulunamadı"
+                      options={products.map(p => ({ value: p.id, label: p.name, sublabel: `Stok: ${p.current_stock} ${p.unit} · Alış: ${formatCurrency(p.purchase_price)}` }))}
+                    />
+                  </div>
+                  <button type="button" onClick={() => setScannerOpen(true)} title="Barkod Tara" className="icon-btn shrink-0">
+                    <ScanLine style={{ width: '0.875rem', height: '0.875rem' }} />
+                  </button>
+                </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {cartItems.map(item => (
                     <div key={item.id} className="flex flex-wrap items-center" style={{ gap: '0.5rem', padding: '0.5rem', background: '#f8fafc', borderRadius: '0.5rem', border: '1px solid #e2e8f0' }}>
@@ -718,6 +744,12 @@ export default function Purchases() {
             </p>
           </div>
         )}
+      />
+
+      <BarcodeScanner
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScan={code => { setScannerOpen(false); handleScan(code) }}
       />
     </div>
   )

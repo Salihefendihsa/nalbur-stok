@@ -44,5 +44,7 @@ export function useToast() {
     info: (msg: string) => add(msg, 'info'),
     undo: (msg: string, onUndo: () => void) =>
       add(msg, 'success', { action: { label: 'Geri Al', onClick: onUndo }, duration: 5000 }),
+    errorWithAction: (msg: string, actionLabel: string, onAction: () => void) =>
+      add(msg, 'error', { action: { label: actionLabel, onClick: onAction }, duration: 6000 }),
   }
 }

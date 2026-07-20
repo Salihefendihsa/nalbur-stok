@@ -1,8 +1,9 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Plus, Edit2, Trash2, AlertTriangle, ShoppingCart, Archive, X,
   ChevronDown, Package, User, CreditCard, Banknote, ArrowRightLeft,
-  CheckCircle2, TrendingUp, Receipt, Calendar,
+  CheckCircle2, TrendingUp, Receipt, Calendar, ScanLine,
 } from 'lucide-react'
 import Header from '@/components/layout/Header'
 import Button from '@/components/ui/Button'
@@ -11,6 +12,7 @@ import Input from '@/components/ui/Input'
 import EmptyState from '@/components/ui/EmptyState'
 import DeletedItemsModal from '@/components/ui/DeletedItemsModal'
 import SearchableSelect from '@/components/ui/SearchableSelect'
+import BarcodeScanner from '@/components/ui/BarcodeScanner'
 import {
   useSales, useAddSale, useUpdateSale, useDeleteSale,
   useDeletedSales, useRestoreSale,
@@ -240,6 +242,7 @@ function SaleDetailPanel({ sale, onEdit, onDelete }: {
 // ─── main component ────────────────────────────────────────────────────────────
 export default function Sales() {
   const toast = useToast()
+  const navigate = useNavigate()
   const { data: sales = [], isLoading, error } = useSales()
   const { data: products = [] } = useProducts()
   const addSaleMutation = useAddSale()
@@ -267,6 +270,23 @@ export default function Sales() {
   const { data: deletedSales = [], isLoading: loadingDeleted } = useDeletedSales(deletedOpen)
 
   const [expandedRow, setExpandedRow] = useState<string | null>(null)
+  const [scannerOpen, setScannerOpen] = useState(false)
+
+  function handleScan(code: string) {
+    const product = products.find((p) => p.barcode === code)
+    if (product) {
+      const err = cartActions.addItem({
+        id: product.id, name: product.name, sku: product.sku, unitPrice: product.sale_price,
+        taxRate: product.vat_rate, maxStock: product.current_stock, unit: product.unit, quantity: 1,
+      })
+      if (err) toast.error(err)
+      else toast.success(`"${product.name}" sepete eklendi.`)
+    } else {
+      toast.errorWithAction('Bu barkodla kayıtlı ürün yok.', 'Yeni Ürün Ekle', () => {
+        navigate('/urunler/yeni', { state: { barcode: code } })
+      })
+    }
+  }
 
   function openCreate() {
     setEditTarget(null); setCustomerName(''); setPaymentMethod('nakit'); setItems([emptyLine()]); setFormError(''); setFormOpen(true)
@@ -579,22 +599,29 @@ export default function Sales() {
               </>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <SearchableSelect
-                  value=""
-                  onChange={productId => {
-                    const p = products.find(prod => prod.id === productId)
-                    if (p) {
-                      const err = cartActions.addItem({
-                        id: p.id, name: p.name, sku: p.sku, unitPrice: p.sale_price,
-                        taxRate: p.vat_rate, maxStock: p.current_stock, unit: p.unit, quantity: 1
-                      })
-                      if (err) toast.error(err)
-                    }
-                  }}
-                  placeholder="Barkod okut veya ürün ara..."
-                  emptyMessage="Ürün bulunamadı"
-                  options={products.map(p => ({ value: p.id, label: p.name, sublabel: `Stok: ${p.current_stock} ${p.unit} · Fiyat: ${formatCurrency(p.sale_price)}` }))}
-                />
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <SearchableSelect
+                      value=""
+                      onChange={productId => {
+                        const p = products.find(prod => prod.id === productId)
+                        if (p) {
+                          const err = cartActions.addItem({
+                            id: p.id, name: p.name, sku: p.sku, unitPrice: p.sale_price,
+                            taxRate: p.vat_rate, maxStock: p.current_stock, unit: p.unit, quantity: 1
+                          })
+                          if (err) toast.error(err)
+                        }
+                      }}
+                      placeholder="Barkod okut veya ürün ara..."
+                      emptyMessage="Ürün bulunamadı"
+                      options={products.map(p => ({ value: p.id, label: p.name, sublabel: `Stok: ${p.current_stock} ${p.unit} · Fiyat: ${formatCurrency(p.sale_price)}` }))}
+                    />
+                  </div>
+                  <button type="button" onClick={() => setScannerOpen(true)} title="Barkod Tara" className="icon-btn shrink-0">
+                    <ScanLine style={{ width: '0.875rem', height: '0.875rem' }} />
+                  </button>
+                </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {cartItems.map(item => (
                     <div key={item.id} className="flex flex-wrap items-center" style={{ gap: '0.5rem', padding: '0.5rem', background: '#f8fafc', borderRadius: '0.5rem', border: '1px solid #e2e8f0' }}>
@@ -692,6 +719,12 @@ export default function Sales() {
             </p>
           </div>
         )}
+      />
+
+      <BarcodeScanner
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScan={code => { setScannerOpen(false); handleScan(code) }}
       />
     </div>
   )

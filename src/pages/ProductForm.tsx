@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react'
-import { useNavigate, useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Save } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate, useParams, useLocation, Link } from 'react-router-dom'
+import { ArrowLeft, Save, ScanLine } from 'lucide-react'
 import Header from '@/components/layout/Header'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import BarcodeScanner from '@/components/ui/BarcodeScanner'
 import { useProduct, useCreateProduct, useUpdateProduct, type ProductInput } from '@/lib/queries/products'
 import { useCategories } from '@/lib/queries/categories'
 import { useSuppliers } from '@/lib/queries/suppliers'
+import { findProductByBarcode, lookupOpenFoodFacts } from '@/lib/barcode'
 import { useToast } from '@/store/toast'
 
 const EMPTY: ProductInput = {
@@ -27,6 +29,7 @@ const EMPTY: ProductInput = {
 
 export default function ProductForm() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { id } = useParams<{ id: string }>()
   const isEdit = !!id
   const toast = useToast()
@@ -39,6 +42,8 @@ export default function ProductForm() {
 
   const [form, setForm] = useState<ProductInput>(EMPTY)
   const [errors, setErrors] = useState<Partial<Record<keyof ProductInput, string>>>({})
+  const [scannerOpen, setScannerOpen] = useState(false)
+  const [offLookupPending, setOffLookupPending] = useState(false)
 
   useEffect(() => {
     if (existing) {
@@ -59,6 +64,55 @@ export default function ProductForm() {
       })
     }
   }, [existing])
+
+  // Products sayfasından "Barkod Tara" ile buraya yönlendirildiyse
+  // (barkod bizim veritabanımızda bulunamadı) barkodu doldur ve
+  // Open Food Facts'te otomatik ara.
+  const incomingBarcodeHandled = useRef(false)
+  useEffect(() => {
+    if (isEdit || incomingBarcodeHandled.current) return
+    const incoming = (location.state as { barcode?: string } | null)?.barcode
+    if (!incoming) return
+    incomingBarcodeHandled.current = true
+    set('barcode', incoming)
+    void autoFillFromBarcode(incoming)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEdit, location.state])
+
+  async function autoFillFromBarcode(code: string) {
+    setOffLookupPending(true)
+    try {
+      const off = await lookupOpenFoodFacts(code)
+      if (off?.name) {
+        set('name', off.brand && !off.name.toLowerCase().includes(off.brand.toLowerCase()) ? `${off.name} (${off.brand})` : off.name)
+        toast.success('Ürün bilgileri barkoddan dolduruldu.')
+      } else {
+        toast.info('Barkod bulunamadı, ürün bilgilerini girin.')
+      }
+    } finally {
+      setOffLookupPending(false)
+    }
+  }
+
+  async function handleScan(code: string) {
+    set('barcode', code)
+
+    if (isEdit) return
+
+    try {
+      const existingProduct = await findProductByBarcode(code)
+      if (existingProduct) {
+        toast.info('Bu barkod zaten kayıtlı, ürüne yönlendiriliyorsunuz.')
+        navigate(`/urunler/${existingProduct.id}`)
+        return
+      }
+    } catch (err) {
+      toast.error((err as Error).message)
+      return
+    }
+
+    await autoFillFromBarcode(code)
+  }
 
   function set<K extends keyof ProductInput>(key: K, value: ProductInput[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -142,12 +196,28 @@ export default function ProductForm() {
                 onChange={(e) => set('sku', e.target.value)}
                 error={errors.sku}
               />
-              <Input
-                label="Barkod"
-                placeholder="EAN13 veya özel"
-                value={form.barcode ?? ''}
-                onChange={(e) => set('barcode', e.target.value || null)}
-              />
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 500, color: '#334155', display: 'block', marginBottom: '0.25rem' }}>
+                  Barkod
+                </label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input
+                    className="input"
+                    placeholder="EAN13 veya özel"
+                    value={form.barcode ?? ''}
+                    onChange={(e) => set('barcode', e.target.value || null)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setScannerOpen(true)}
+                    title="Barkod Tara"
+                    className="icon-btn shrink-0"
+                    disabled={offLookupPending}
+                  >
+                    <ScanLine style={{ width: '0.875rem', height: '0.875rem' }} />
+                  </button>
+                </div>
+              </div>
             </div>
             <Input
               label="Ürün Adı *"
@@ -302,6 +372,12 @@ export default function ProductForm() {
 
         </div>
       </div>
+
+      <BarcodeScanner
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScan={handleScan}
+      />
     </div>
   )
 }
