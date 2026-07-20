@@ -123,7 +123,7 @@ export default function StockMovements() {
             <button
               onClick={() => setDeletedOpen(true)}
               title="Silinenler"
-              className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors"
+              className="icon-btn"
             >
               <Archive className="w-3.5 h-3.5" />
             </button>
@@ -135,7 +135,7 @@ export default function StockMovements() {
         }
       />
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
+      <div className="p-3 sm:p-6" style={{ flex: 1, overflowY: 'auto' }}>
         {isLoading ? (
           <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {Array.from({ length: 6 }).map((_, i) => (
@@ -156,7 +156,7 @@ export default function StockMovements() {
             />
           </div>
         ) : (
-          <div className="card">
+          <div className="card table-scroll-wrap">
             <table className="table-sticky-head" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
@@ -183,17 +183,10 @@ export default function StockMovements() {
                     <td style={{ padding: '0.625rem 1rem', color: '#94a3b8', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>{formatDateTime(m.created_at)}</td>
                     <td style={{ padding: '0.625rem 1rem' }}>
                       <div style={{ display: 'flex', gap: '0.375rem', justifyContent: 'flex-end' }}>
-                        <button
-                          onClick={() => openEdit(m)}
-                          title="Notu düzenle"
-                          style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid #e2e8f0', borderRadius: '0.375rem', cursor: 'pointer', color: '#64748b' }}
-                        >
+                        <button onClick={() => openEdit(m)} title="Notu düzenle" className="icon-btn">
                           <Edit2 style={{ width: '0.875rem', height: '0.875rem' }} />
                         </button>
-                        <button
-                          onClick={() => setDeleteTarget(m)}
-                          style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid #fecaca', borderRadius: '0.375rem', cursor: 'pointer', color: '#dc2626' }}
-                        >
+                        <button onClick={() => setDeleteTarget(m)} className="icon-btn icon-btn-danger">
                           <Trash2 style={{ width: '0.875rem', height: '0.875rem' }} />
                         </button>
                       </div>
@@ -208,7 +201,7 @@ export default function StockMovements() {
 
       {/* Form Modal */}
       <Modal open={formOpen} onClose={() => setFormOpen(false)} title={editTarget ? 'Hareketi Düzenle' : 'Yeni Stok Hareketi'} width="max-w-md">
-        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div className="p-4 sm:p-6" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {!editTarget && (
             <>
               <div>
@@ -222,7 +215,7 @@ export default function StockMovements() {
                   ))}
                 </select>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: '1rem' }}>
                 <div>
                   <label style={{ fontSize: '0.75rem', fontWeight: 500, color: '#334155', display: 'block', marginBottom: '0.25rem' }}>
                     Hareket Türü
@@ -273,7 +266,7 @@ export default function StockMovements() {
 
       {/* Delete confirmation */}
       <Modal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Hareketi Sil" width="max-w-sm">
-        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div className="p-4 sm:p-6" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
             <AlertTriangle style={{ width: '1.25rem', height: '1.25rem', color: '#f59e0b', flexShrink: 0, marginTop: '2px' }} />
             <div>

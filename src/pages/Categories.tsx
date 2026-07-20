@@ -123,7 +123,7 @@ export default function Categories() {
             <button
               onClick={() => setDeletedOpen(true)}
               title="Silinenler"
-              className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors"
+              className="icon-btn"
             >
               <Archive className="w-3.5 h-3.5" />
             </button>
@@ -135,7 +135,7 @@ export default function Categories() {
         }
       />
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
+      <div className="p-3 sm:p-6" style={{ flex: 1, overflowY: 'auto' }}>
         {isLoading ? (
           <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {Array.from({ length: 6 }).map((_, i) => (
@@ -183,7 +183,7 @@ export default function Categories() {
         title={editTarget ? 'Kategori Düzenle' : 'Yeni Kategori'}
         width="max-w-md"
       >
-        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div className="p-4 sm:p-6" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <Input
             label="Kategori Adı *"
             placeholder="Örn: El Aletleri"
@@ -231,7 +231,7 @@ export default function Categories() {
         title="Kategoriyi Sil"
         width="max-w-sm"
       >
-        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div className="p-4 sm:p-6" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
             <AlertTriangle style={{ width: '1.25rem', height: '1.25rem', color: '#f59e0b', flexShrink: 0, marginTop: '2px' }} />
             <div>
@@ -305,16 +305,10 @@ function CategoryRow({ cat, onEdit, onDelete, isRoot, indent, isLastChild }: Cat
         </p>
       </div>
       <div style={{ display: 'flex', gap: '0.375rem', flexShrink: 0 }}>
-        <button
-          onClick={() => onEdit(cat)}
-          style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid #e2e8f0', borderRadius: '0.375rem', cursor: 'pointer', color: '#64748b' }}
-        >
+        <button onClick={() => onEdit(cat)} className="icon-btn">
           <Edit2 style={{ width: '0.875rem', height: '0.875rem' }} />
         </button>
-        <button
-          onClick={() => onDelete(cat)}
-          style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid #fecaca', borderRadius: '0.375rem', cursor: 'pointer', color: '#dc2626' }}
-        >
+        <button onClick={() => onDelete(cat)} className="icon-btn icon-btn-danger">
           <Trash2 style={{ width: '0.875rem', height: '0.875rem' }} />
         </button>
       </div>

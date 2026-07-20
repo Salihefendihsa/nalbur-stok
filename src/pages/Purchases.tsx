@@ -184,7 +184,7 @@ export default function Purchases() {
             <button
               onClick={() => setDeletedOpen(true)}
               title="Silinenler"
-              className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors"
+              className="icon-btn"
             >
               <Archive className="w-3.5 h-3.5" />
             </button>
@@ -196,7 +196,7 @@ export default function Purchases() {
         }
       />
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div className="p-3 sm:p-6" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         {isLoading ? (
           <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {Array.from({ length: 5 }).map((_, i) => (
@@ -224,14 +224,15 @@ export default function Purchases() {
               <div key={group.key} className="card" style={{ overflow: 'hidden' }}>
                 <button
                   onClick={() => toggleGroup(group.key)}
+                  className="flex-wrap"
                   style={{
-                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    width: '100%', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem',
                     padding: '0.875rem 1rem', background: '#f8fafc', border: 'none', borderBottom: collapsed ? 'none' : '1px solid #e2e8f0',
                     cursor: 'pointer', textAlign: 'left',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    {collapsed ? <ChevronRight style={{ width: '1rem', height: '1rem', color: '#64748b' }} /> : <ChevronDown style={{ width: '1rem', height: '1rem', color: '#64748b' }} />}
+                  <div className="flex-wrap" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                    {collapsed ? <ChevronRight style={{ width: '1rem', height: '1rem', color: '#64748b', flexShrink: 0 }} /> : <ChevronDown style={{ width: '1rem', height: '1rem', color: '#64748b', flexShrink: 0 }} />}
                     {group.supplierId ? (
                       <Link
                         to={`/tedarikciler/${group.supplierId}`}
@@ -243,12 +244,13 @@ export default function Purchases() {
                     ) : (
                       <span style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.9rem' }}>{group.name}</span>
                     )}
-                    <span className="badge-gray">{group.purchases.length} alış</span>
+                    <span className="badge-gray" style={{ flexShrink: 0 }}>{group.purchases.length} alış</span>
                   </div>
-                  <span style={{ fontWeight: 600, color: 'var(--color-primary-600)', fontSize: '0.875rem' }}>{formatCurrency(groupTotal)}</span>
+                  <span style={{ fontWeight: 600, color: 'var(--color-primary-600)', fontSize: '0.875rem', flexShrink: 0 }}>{formatCurrency(groupTotal)}</span>
                 </button>
 
                 {!collapsed && (
+                  <div className="table-scroll-wrap">
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
                     <thead>
                       <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
@@ -272,16 +274,10 @@ export default function Purchases() {
                           </td>
                           <td style={{ padding: '0.75rem 1rem' }}>
                             <div style={{ display: 'flex', gap: '0.375rem', justifyContent: 'flex-end' }}>
-                              <button
-                                onClick={() => openEdit(p)}
-                                style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid #e2e8f0', borderRadius: '0.375rem', cursor: 'pointer', color: '#64748b' }}
-                              >
+                              <button onClick={() => openEdit(p)} className="icon-btn">
                                 <Edit2 style={{ width: '0.875rem', height: '0.875rem' }} />
                               </button>
-                              <button
-                                onClick={() => setDeleteTarget(p)}
-                                style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid #fecaca', borderRadius: '0.375rem', cursor: 'pointer', color: '#dc2626' }}
-                              >
+                              <button onClick={() => setDeleteTarget(p)} className="icon-btn icon-btn-danger">
                                 <Trash2 style={{ width: '0.875rem', height: '0.875rem' }} />
                               </button>
                             </div>
@@ -290,6 +286,7 @@ export default function Purchases() {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 )}
               </div>
             )
@@ -299,8 +296,8 @@ export default function Purchases() {
 
       {/* Form Modal */}
       <Modal open={formOpen} onClose={() => setFormOpen(false)} title={editTarget ? 'Alışı Düzenle' : 'Yeni Alış'} width="max-w-2xl">
-        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div className="p-4 sm:p-6" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: '1rem' }}>
             <div>
               <label style={{ fontSize: '0.75rem', fontWeight: 500, color: '#334155', display: 'block', marginBottom: '0.25rem' }}>
                 Tedarikçi *
@@ -328,18 +325,21 @@ export default function Purchases() {
             {!supplierId && (
               <p style={{ margin: '0 0 0.5rem', fontSize: '0.8125rem', color: '#94a3b8' }}>Ürün eklemeden önce bir tedarikçi seçin.</p>
             )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {items.map((line, idx) => (
-                <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 90px 110px 28px', gap: '0.5rem', alignItems: 'center' }}>
-                  <SearchableSelect
-                    value={line.product_id}
-                    onChange={(productId) => handleProductSelect(idx, productId)}
-                    placeholder="Ürün seçin…"
-                    emptyMessage="Ürün bulunamadı"
-                    options={products.map((p) => ({ value: p.id, label: p.name, sublabel: `Stok: ${p.current_stock} ${p.unit}` }))}
-                  />
+                <div key={idx} className="flex flex-wrap items-center" style={{ gap: '0.5rem' }}>
+                  <div className="w-full sm:flex-1" style={{ minWidth: '160px' }}>
+                    <SearchableSelect
+                      value={line.product_id}
+                      onChange={(productId) => handleProductSelect(idx, productId)}
+                      placeholder="Ürün seçin…"
+                      emptyMessage="Ürün bulunamadı"
+                      options={products.map((p) => ({ value: p.id, label: p.name, sublabel: `Stok: ${p.current_stock} ${p.unit}` }))}
+                    />
+                  </div>
                   <input
                     className="input"
+                    style={{ width: '84px' }}
                     type="number"
                     min={1}
                     value={line.quantity}
@@ -347,6 +347,7 @@ export default function Purchases() {
                   />
                   <input
                     className="input"
+                    style={{ width: '104px' }}
                     type="number"
                     min={0}
                     value={line.unit_price}
@@ -355,7 +356,8 @@ export default function Purchases() {
                   <button
                     onClick={() => removeLine(idx)}
                     disabled={items.length === 1}
-                    style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid #fecaca', borderRadius: '0.375rem', cursor: items.length === 1 ? 'not-allowed' : 'pointer', color: '#dc2626', opacity: items.length === 1 ? 0.4 : 1 }}
+                    className="icon-btn icon-btn-danger shrink-0"
+                    style={{ opacity: items.length === 1 ? 0.4 : 1, cursor: items.length === 1 ? 'not-allowed' : 'pointer' }}
                   >
                     <X style={{ width: '0.875rem', height: '0.875rem' }} />
                   </button>
@@ -371,7 +373,7 @@ export default function Purchases() {
           </div>
           {formError && <p style={{ margin: 0, fontSize: '0.75rem', color: '#dc2626' }}>{formError}</p>}
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1.5rem', padding: '0.75rem 0', borderTop: '1px solid #f1f5f9', fontSize: '0.875rem' }}>
+          <div className="flex flex-wrap" style={{ justifyContent: 'flex-end', gap: '0.75rem 1.5rem', padding: '0.75rem 0', borderTop: '1px solid #f1f5f9', fontSize: '0.875rem' }}>
             <span style={{ color: '#64748b' }}>Toplam: <strong style={{ color: 'var(--color-primary-600)' }}>{formatCurrency(linesTotal)}</strong></span>
           </div>
 
@@ -386,7 +388,7 @@ export default function Purchases() {
 
       {/* Delete confirmation */}
       <Modal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Alışı Sil" width="max-w-sm">
-        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div className="p-4 sm:p-6" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
             <AlertTriangle style={{ width: '1.25rem', height: '1.25rem', color: '#f59e0b', flexShrink: 0, marginTop: '2px' }} />
             <div>

@@ -297,7 +297,7 @@ export default function UserGuide() {
   return (
     <div className="flex flex-col">
       <Header title="Kullanım Kılavuzu" subtitle="Nalbur Stok'u nasıl kullanacağınızı öğrenin" />
-      <div className="p-6 space-y-4" style={{ maxWidth: '760px' }}>
+      <div className="p-3 sm:p-6 space-y-4" style={{ maxWidth: '760px' }}>
         <div style={{ position: 'relative' }}>
           <Search style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', width: '1.125rem', height: '1.125rem', color: '#94a3b8', pointerEvents: 'none' }} />
           <input

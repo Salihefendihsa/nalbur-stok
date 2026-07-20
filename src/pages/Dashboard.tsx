@@ -66,9 +66,9 @@ export default function Dashboard() {
           </div>
         </div>
       ) : (
-        <div className="p-6 space-y-6" style={{ animation: 'fade-in-up 300ms ease' }}>
+        <div className="p-3 sm:p-6 space-y-4 sm:space-y-6" style={{ animation: 'fade-in-up 300ms ease' }}>
           <div
-            className="rounded-2xl p-6 flex items-center justify-between text-white"
+            className="rounded-2xl p-4 sm:p-6 flex items-center justify-between gap-3 text-white flex-wrap"
             style={{
               background: 'linear-gradient(135deg, #0f172a, #1e293b 60%, var(--color-primary-700))',
               boxShadow: '0 8px 30px -8px rgb(15 23 42 / 0.4)',
@@ -100,7 +100,7 @@ export default function Dashboard() {
             </div>
           )}
 
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <KpiCard
               title="Toplam Ürün"
               value={(data?.totalProducts ?? 0).toLocaleString('tr-TR')}
@@ -128,8 +128,8 @@ export default function Dashboard() {
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            <div className="col-span-2 card p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2 card p-4 sm:p-6">
               <h3 className="text-sm font-semibold text-gray-900 mb-4">Son Hareketler</h3>
               {data && data.recentMovements.length > 0 ? (
                 <div className="space-y-1">
@@ -169,7 +169,7 @@ export default function Dashboard() {
               )}
             </div>
 
-            <div className="card p-6">
+            <div className="card p-4 sm:p-6">
               <h3 className="text-sm font-semibold text-gray-900 mb-4">Kritik Stoklar</h3>
               {data && data.lowStockProducts.length > 0 ? (
                 <div className="space-y-3">

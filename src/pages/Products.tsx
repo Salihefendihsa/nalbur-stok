@@ -69,7 +69,7 @@ export default function Products() {
             <button
               onClick={() => setDeletedOpen(true)}
               title="Silinenler"
-              className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors"
+              className="icon-btn"
             >
               <Archive className="w-3.5 h-3.5" />
             </button>
@@ -81,7 +81,7 @@ export default function Products() {
         }
       />
 
-      <div style={{ flex: 1, minHeight: 0, padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
+      <div className="p-3 sm:p-6" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         <div className="card" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           {/* Toolbar */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderBottom: '1px solid #e2e8f0', flexShrink: 0 }}>
@@ -97,9 +97,10 @@ export default function Products() {
             </div>
           </div>
 
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflowX: 'auto' }}>
           {/* Column headers */}
           <div style={{
-            display: 'grid', gridTemplateColumns: COLS,
+            display: 'grid', gridTemplateColumns: COLS, minWidth: '620px',
             padding: '0.625rem 1rem', borderBottom: '1px solid #f1f5f9',
             fontSize: '0.7rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em',
             flexShrink: 0,
@@ -119,7 +120,7 @@ export default function Products() {
           ) : isLoading ? (
             <div style={{ flex: 1, padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', overflowY: 'hidden' }}>
               {Array.from({ length: 14 }).map((_, i) => (
-                <div key={i} style={{ display: 'grid', gridTemplateColumns: COLS, alignItems: 'center', gap: '1rem', paddingInline: '0' }}>
+                <div key={i} style={{ display: 'grid', gridTemplateColumns: COLS, minWidth: '620px', alignItems: 'center', gap: '1rem', paddingInline: '0' }}>
                   <div className="skeleton" style={{ height: '14px', width: '60px' }} />
                   <div className="skeleton" style={{ height: '14px', width: '160px' }} />
                   <div className="skeleton" style={{ height: '14px', width: '70px' }} />
@@ -148,8 +149,8 @@ export default function Products() {
               }
             />
           ) : (
-            <div ref={parentRef} style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
-              <div style={{ height: totalSize, position: 'relative' }}>
+            <div ref={parentRef} style={{ flex: 1, minHeight: 0, overflowY: 'auto', minWidth: '620px' }}>
+              <div style={{ height: totalSize, position: 'relative', minWidth: '620px' }}>
                 {virtualItems.map((vRow) => {
                   const p = data[vRow.index]
                   return (
@@ -166,6 +167,7 @@ export default function Products() {
               </div>
             </div>
           )}
+        </div>
 
           {/* Footer */}
           {data.length > 0 && (

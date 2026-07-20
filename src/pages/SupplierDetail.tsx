@@ -145,7 +145,7 @@ export default function SupplierDetail() {
         subtitle={`${purchases.length} alış — ${formatCurrency(totalSpent)}`}
         actions={
           <>
-            <Link to="/tedarikciler" className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors">
+            <Link to="/tedarikciler" className="icon-btn">
               <ArrowLeft className="w-3.5 h-3.5" />
             </Link>
             <Button variant="secondary" size="sm" onClick={openEditSupplier}>
@@ -158,7 +158,7 @@ export default function SupplierDetail() {
         }
       />
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <div className="p-3 sm:p-6" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         {supplier && (
           <div className="card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {supplier.phone && (
@@ -194,7 +194,7 @@ export default function SupplierDetail() {
               Bu tedarikçiden henüz alış yapılmamış.
             </div>
           ) : (
-            <div className="card">
+            <div className="card table-scroll-wrap">
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
@@ -216,16 +216,10 @@ export default function SupplierDetail() {
                       <td style={{ padding: '0.75rem 1rem', color: '#94a3b8', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>{formatDateTime(p.created_at)}</td>
                       <td style={{ padding: '0.75rem 1rem' }}>
                         <div style={{ display: 'flex', gap: '0.375rem', justifyContent: 'flex-end' }}>
-                          <button
-                            onClick={() => openEditPurchase(p)}
-                            style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid #e2e8f0', borderRadius: '0.375rem', cursor: 'pointer', color: '#64748b' }}
-                          >
+                          <button onClick={() => openEditPurchase(p)} className="icon-btn">
                             <Edit2 style={{ width: '0.875rem', height: '0.875rem' }} />
                           </button>
-                          <button
-                            onClick={() => setDeletePurchaseTarget(p)}
-                            style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid #fecaca', borderRadius: '0.375rem', cursor: 'pointer', color: '#dc2626' }}
-                          >
+                          <button onClick={() => setDeletePurchaseTarget(p)} className="icon-btn icon-btn-danger">
                             <Trash2 style={{ width: '0.875rem', height: '0.875rem' }} />
                           </button>
                         </div>
@@ -242,9 +236,9 @@ export default function SupplierDetail() {
       {/* Edit supplier modal */}
       <Modal open={editSupplierOpen} onClose={() => setEditSupplierOpen(false)} title="Tedarikçi Düzenle" width="max-w-lg">
         {supplierForm && (
-          <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="p-4 sm:p-6" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <Input label="Ad *" value={supplierForm.name} onChange={(e) => setSupplierForm((f) => f && { ...f, name: e.target.value })} />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: '1rem' }}>
               <Input label="Telefon" value={supplierForm.phone ?? ''} onChange={(e) => setSupplierForm((f) => f && { ...f, phone: nullify(e.target.value) })} />
               <Input label="E-posta" type="email" value={supplierForm.email ?? ''} onChange={(e) => setSupplierForm((f) => f && { ...f, email: nullify(e.target.value) })} />
             </div>
@@ -260,7 +254,7 @@ export default function SupplierDetail() {
 
       {/* Delete supplier confirmation */}
       <Modal open={deleteSupplierOpen} onClose={() => setDeleteSupplierOpen(false)} title="Tedarikçiyi Sil" width="max-w-sm">
-        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div className="p-4 sm:p-6" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
             <AlertTriangle style={{ width: '1.25rem', height: '1.25rem', color: '#f59e0b', flexShrink: 0, marginTop: '2px' }} />
             <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 500, color: '#0f172a' }}>"{supplier?.name}" silinecek</p>
@@ -274,25 +268,28 @@ export default function SupplierDetail() {
 
       {/* Edit purchase modal */}
       <Modal open={!!editPurchase} onClose={() => setEditPurchase(null)} title="Alışı Düzenle" width="max-w-2xl">
-        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div className="p-4 sm:p-6" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <Input label="Fatura No" value={invoiceNo} onChange={(e) => setInvoiceNo(e.target.value)} />
           <div>
             <label style={{ fontSize: '0.75rem', fontWeight: 500, color: '#334155', display: 'block', marginBottom: '0.5rem' }}>Ürünler *</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {items.map((line, idx) => (
-                <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 90px 110px 28px', gap: '0.5rem', alignItems: 'center' }}>
-                  <SearchableSelect
-                    value={line.product_id}
-                    onChange={(productId) => handleProductSelect(idx, productId)}
-                    placeholder="Ürün seçin…"
-                    options={products.map((p) => ({ value: p.id, label: p.name, sublabel: `Stok: ${p.current_stock} ${p.unit}` }))}
-                  />
-                  <input className="input" type="number" min={1} value={line.quantity} onChange={(e) => updateLine(idx, { quantity: parseFloat(e.target.value) || 0 })} />
-                  <input className="input" type="number" min={0} value={line.unit_price} onChange={(e) => updateLine(idx, { unit_price: parseFloat(e.target.value) || 0 })} />
+                <div key={idx} className="flex flex-wrap items-center" style={{ gap: '0.5rem' }}>
+                  <div className="w-full sm:flex-1" style={{ minWidth: '160px' }}>
+                    <SearchableSelect
+                      value={line.product_id}
+                      onChange={(productId) => handleProductSelect(idx, productId)}
+                      placeholder="Ürün seçin…"
+                      options={products.map((p) => ({ value: p.id, label: p.name, sublabel: `Stok: ${p.current_stock} ${p.unit}` }))}
+                    />
+                  </div>
+                  <input className="input" style={{ width: '84px' }} type="number" min={1} value={line.quantity} onChange={(e) => updateLine(idx, { quantity: parseFloat(e.target.value) || 0 })} />
+                  <input className="input" style={{ width: '104px' }} type="number" min={0} value={line.unit_price} onChange={(e) => updateLine(idx, { unit_price: parseFloat(e.target.value) || 0 })} />
                   <button
                     onClick={() => setItems((cur) => cur.filter((_, i) => i !== idx))}
                     disabled={items.length === 1}
-                    style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid #fecaca', borderRadius: '0.375rem', cursor: items.length === 1 ? 'not-allowed' : 'pointer', color: '#dc2626', opacity: items.length === 1 ? 0.4 : 1 }}
+                    className="icon-btn icon-btn-danger shrink-0"
+                    style={{ opacity: items.length === 1 ? 0.4 : 1, cursor: items.length === 1 ? 'not-allowed' : 'pointer' }}
                   >
                     <X style={{ width: '0.875rem', height: '0.875rem' }} />
                   </button>
@@ -315,7 +312,7 @@ export default function SupplierDetail() {
 
       {/* Delete purchase confirmation */}
       <Modal open={!!deletePurchaseTarget} onClose={() => setDeletePurchaseTarget(null)} title="Alışı Sil" width="max-w-sm">
-        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div className="p-4 sm:p-6" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
             <AlertTriangle style={{ width: '1.25rem', height: '1.25rem', color: '#f59e0b', flexShrink: 0, marginTop: '2px' }} />
             <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 500, color: '#0f172a' }}>

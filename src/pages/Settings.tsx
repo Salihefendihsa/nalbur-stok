@@ -6,7 +6,7 @@ export default function Settings() {
   return (
     <div className="flex flex-col">
       <Header title="Ayarlar" subtitle="Uygulama ve mağaza ayarları" />
-      <div className="p-6 space-y-6">
+      <div className="p-3 sm:p-6 space-y-6">
         <div className="card p-6 space-y-4 max-w-lg">
           <h3 className="text-sm font-semibold text-gray-900">Mağaza Bilgileri</h3>
           <Input label="Mağaza Adı" placeholder="Nalburiye Adı" />

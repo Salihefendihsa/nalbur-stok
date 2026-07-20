@@ -69,7 +69,7 @@ export default function ProductDetail() {
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         <Header title="Ürün Detayı" />
         <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '860px' }}>
-          <div className="card" style={{ padding: '1.5rem', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
+          <div className="card grid grid-cols-2 sm:grid-cols-3" style={{ padding: '1.5rem', gap: '1.5rem' }}>
             {Array.from({ length: 9 }).map((_, i) => (
               <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
                 <div className="skeleton" style={{ height: '10px', width: '60px' }} />
@@ -125,12 +125,12 @@ export default function ProductDetail() {
         }
       />
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
+      <div className="p-3 sm:p-6" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ maxWidth: '860px', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
           {/* Info grid */}
-          <div className="card" style={{ padding: '1.5rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
+          <div className="card p-4 sm:p-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3" style={{ gap: '1.5rem' }}>
               <InfoRow label="SKU" value={<span style={{ fontFamily: 'monospace' }}>{product.sku}</span>} />
               <InfoRow label="Barkod" value={product.barcode} />
               <InfoRow label="Birim" value={product.unit} />
@@ -145,7 +145,7 @@ export default function ProductDetail() {
           </div>
 
           {/* Stock & Prices */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
+          <div className="grid grid-cols-2 lg:grid-cols-4" style={{ gap: '1rem' }}>
             {[
               { label: 'Mevcut Stok', value: formatStock(product.current_stock, product.unit), danger: product.current_stock <= product.min_stock },
               { label: 'Minimum Stok', value: formatStock(product.min_stock, product.unit), danger: false },
@@ -160,7 +160,7 @@ export default function ProductDetail() {
           </div>
 
           {/* Pricing detail */}
-          <div className="card" style={{ padding: '1.25rem 1.5rem', display: 'flex', gap: '2rem', alignItems: 'center' }}>
+          <div className="card flex-wrap" style={{ padding: '1.25rem 1.5rem', display: 'flex', gap: '1rem 2rem', alignItems: 'center' }}>
             <InfoRow label="KDV Oranı" value={`%${product.vat_rate}`} />
             <InfoRow label="Kar Marjı" value={`%${margin}`} />
             <InfoRow label="Eklenme Tarihi" value={formatDate(product.created_at)} />
@@ -194,6 +194,7 @@ export default function ProductDetail() {
                 Henüz stok hareketi bulunmuyor.
               </div>
             ) : (
+              <div className="table-scroll-wrap">
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
@@ -224,6 +225,7 @@ export default function ProductDetail() {
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
           </div>
         </div>
@@ -236,7 +238,7 @@ export default function ProductDetail() {
         title="Ürünü Sil"
         width="max-w-sm"
       >
-        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div className="p-4 sm:p-6" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
             <AlertTriangle style={{ width: '1.25rem', height: '1.25rem', color: '#f59e0b', flexShrink: 0, marginTop: '2px' }} />
             <div>

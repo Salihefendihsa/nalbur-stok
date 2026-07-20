@@ -128,7 +128,7 @@
     display: block;
     width: 100%;
     padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
+    font-size: 16px; /* prevents iOS Safari auto-zoom on focus */
     line-height: 1.25rem;
     color: var(--color-gray-900);
     background-color: #fff;
@@ -256,6 +256,54 @@
   }
   .table-row-alt:nth-child(even) {
     background-color: var(--color-gray-50);
+  }
+
+  /* Horizontally-scrollable table wrapper for mobile, with a sticky first column */
+  .table-scroll-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .table-scroll-wrap > table {
+    min-width: 640px;
+  }
+
+  /* Small square icon-action buttons (edit/delete/etc. in table rows) */
+  .icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    background: none;
+    border: 1px solid var(--color-gray-200);
+    border-radius: 0.375rem;
+    cursor: pointer;
+    color: var(--color-gray-500);
+  }
+  .icon-btn-danger {
+    border-color: #fecaca;
+    color: #dc2626;
+  }
+}
+
+@media (max-width: 768px) {
+  .btn-primary, .btn-secondary, .btn-danger {
+    min-height: 44px;
+  }
+  .icon-btn {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+  .table-scroll-wrap th:first-child,
+  .table-scroll-wrap td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background-color: inherit;
+    box-shadow: 2px 0 4px -2px rgb(15 23 42 / 0.12);
+  }
+  .table-scroll-wrap thead th:first-child {
+    z-index: 2;
   }
 }
 

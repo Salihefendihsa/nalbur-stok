@@ -96,8 +96,8 @@ export default function ProductForm() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         <Header title="Ürün Düzenle" />
-        <div style={{ padding: '1.5rem', maxWidth: '680px' }}>
-          <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div className="p-3 sm:p-6" style={{ maxWidth: '680px' }}>
+          <div className="card p-4 sm:p-6" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="skeleton" style={{ height: '38px', borderRadius: '0.5rem' }} />
             ))}
@@ -128,13 +128,13 @@ export default function ProductForm() {
         }
       />
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
+      <div className="p-3 sm:p-6" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ maxWidth: '680px', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
           {/* Temel Bilgiler */}
-          <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="card p-4 sm:p-6" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <h3 style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>Temel Bilgiler</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: '1rem' }}>
               <Input
                 label="SKU *"
                 placeholder="Örn: NLB-001"
@@ -172,9 +172,9 @@ export default function ProductForm() {
           </div>
 
           {/* Kategori & Tedarikçi */}
-          <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="card p-4 sm:p-6" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <h3 style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>Sınıflandırma</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: '1rem' }}>
               <div>
                 <label style={{ fontSize: '0.75rem', fontWeight: 500, color: '#334155', display: 'block', marginBottom: '0.25rem' }}>
                   Kategori
@@ -223,9 +223,9 @@ export default function ProductForm() {
           </div>
 
           {/* Stok & Fiyat */}
-          <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="card p-4 sm:p-6" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <h3 style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>Stok & Fiyat</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+            <div className="grid grid-cols-1 sm:grid-cols-3" style={{ gap: '1rem' }}>
               <Input
                 label="Mevcut Stok"
                 type="number"
@@ -249,7 +249,7 @@ export default function ProductForm() {
                 onChange={(e) => set('unit', e.target.value)}
               />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+            <div className="grid grid-cols-1 sm:grid-cols-3" style={{ gap: '1rem' }}>
               <Input
                 label="Alış Fiyatı (₺)"
                 type="number"
