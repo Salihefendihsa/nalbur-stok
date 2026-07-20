@@ -31,7 +31,7 @@ async function adjustProductStock(productId: string, type: MovementType, quantit
 
 export async function createStockMovementsForLines(
   lines: StockLine[],
-  opts: { movement_type: MovementType; reference_type: string; reference_id: string }
+  opts: { movement_type: MovementType; reference_type: 'purchase' | 'sale' | 'manual'; reference_id: string }
 ) {
   for (const line of lines) {
     const { before, after } = await adjustProductStock(line.product_id, opts.movement_type, line.quantity)
@@ -46,6 +46,7 @@ export async function createStockMovementsForLines(
       reference_id: opts.reference_id,
       stock_before: before,
       stock_after: after,
+      note: null,
     })
     if (moveErr) throw new Error(moveErr.message)
   }
@@ -53,7 +54,7 @@ export async function createStockMovementsForLines(
 
 type ReferenceMovement = { product_id: string; movement_type: MovementType; quantity: number }
 
-async function fetchReferenceMovements(referenceType: string, referenceId: string, deleted: boolean) {
+async function fetchReferenceMovements(referenceType: 'purchase' | 'sale' | 'manual', referenceId: string, deleted: boolean) {
   let query = supabase
     .from('stock_movements')
     .select('id, product_id, movement_type, quantity')
@@ -66,7 +67,7 @@ async function fetchReferenceMovements(referenceType: string, referenceId: strin
 }
 
 /** Reverses the stock impact of a reference's movements and hard-deletes them (used when editing a sale/purchase before re-inserting fresh line items). */
-export async function removeStockMovementsForReference(referenceType: string, referenceId: string) {
+export async function removeStockMovementsForReference(referenceType: 'purchase' | 'sale' | 'manual', referenceId: string) {
   const movements = await fetchReferenceMovements(referenceType, referenceId, false)
   for (const m of movements) {
     await adjustProductStock(m.product_id, OPPOSITE[m.movement_type], m.quantity)
@@ -80,7 +81,7 @@ export async function removeStockMovementsForReference(referenceType: string, re
 }
 
 /** Reverses the stock impact and soft-deletes a reference's movements (used when soft-deleting a sale/purchase). */
-export async function reverseStockMovementsForReference(referenceType: string, referenceId: string) {
+export async function reverseStockMovementsForReference(referenceType: 'purchase' | 'sale' | 'manual', referenceId: string) {
   const movements = await fetchReferenceMovements(referenceType, referenceId, false)
   for (const m of movements) {
     await adjustProductStock(m.product_id, OPPOSITE[m.movement_type], m.quantity)
@@ -94,7 +95,7 @@ export async function reverseStockMovementsForReference(referenceType: string, r
 }
 
 /** Reapplies the stock impact and restores a reference's movements (used when restoring a soft-deleted sale/purchase). */
-export async function reapplyStockMovementsForReference(referenceType: string, referenceId: string) {
+export async function reapplyStockMovementsForReference(referenceType: 'purchase' | 'sale' | 'manual', referenceId: string) {
   const movements = await fetchReferenceMovements(referenceType, referenceId, true)
   for (const m of movements) {
     await adjustProductStock(m.product_id, m.movement_type, m.quantity)

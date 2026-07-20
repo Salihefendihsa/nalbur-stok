@@ -4,7 +4,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import {
-  TrendingUp, TrendingDown, ShoppingBag, AlertTriangle,
+  TrendingUp, ShoppingBag, AlertTriangle,
   ArrowUpRight, ArrowDownRight, Package, Download,
   BarChart3, PieChart as PieIcon,
 } from 'lucide-react'

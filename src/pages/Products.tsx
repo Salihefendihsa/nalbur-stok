@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { Plus, Search, AlertCircle, PackageSearch, Archive, ScanLine } from 'lucide-react'
+import { Plus, Search, AlertCircle, PackageSearch, Archive, ScanLine, AlertTriangle, X } from 'lucide-react'
 import Header from '@/components/layout/Header'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
@@ -26,9 +26,19 @@ function stockStatus(p: Product): { label: string; className: string } {
 export default function Products() {
   const navigate = useNavigate()
   const toast = useToast()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebounce(search, 300)
   const { data = [], isLoading, error } = useProducts(debouncedSearch)
+
+  const criticalOnly = searchParams.get('filter') === 'kritik'
+  const visibleData = criticalOnly ? data.filter((p) => p.current_stock <= p.min_stock) : data
+
+  function clearCriticalFilter() {
+    const next = new URLSearchParams(searchParams)
+    next.delete('filter')
+    setSearchParams(next)
+  }
 
   const [deletedOpen, setDeletedOpen] = useState(false)
   const [restoringId, setRestoringId] = useState<string | null>(null)
@@ -64,7 +74,7 @@ export default function Products() {
 
   const parentRef = useRef<HTMLDivElement>(null)
   const virtualizer = useVirtualizer({
-    count: data.length,
+    count: visibleData.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => ROW_H,
     overscan: 15,
@@ -79,7 +89,7 @@ export default function Products() {
         subtitle={
           isLoading
             ? 'Yükleniyor…'
-            : `${data.length} ürün${debouncedSearch ? ' (filtrelenmiş)' : ''}`
+            : `${visibleData.length} ürün${debouncedSearch || criticalOnly ? ' (filtrelenmiş)' : ''}`
         }
         actions={
           <>
@@ -105,7 +115,7 @@ export default function Products() {
       <div className="p-3 sm:p-6" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         <div className="card" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           {/* Toolbar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderBottom: '1px solid #e2e8f0', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderBottom: '1px solid #e2e8f0', flexShrink: 0, flexWrap: 'wrap' }}>
             <div style={{ position: 'relative', flex: 1, maxWidth: '22rem' }}>
               <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: '#94a3b8', pointerEvents: 'none' }} />
               <input
@@ -116,6 +126,21 @@ export default function Products() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
+            {criticalOnly && (
+              <button
+                onClick={clearCriticalFilter}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.375rem',
+                  padding: '0.3rem 0.625rem', borderRadius: '999px',
+                  background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c',
+                  fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                <AlertTriangle style={{ width: '0.75rem', height: '0.75rem' }} />
+                Kritik Stok
+                <X style={{ width: '0.75rem', height: '0.75rem' }} />
+              </button>
+            )}
           </div>
 
         <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflowX: 'auto' }}>
@@ -151,17 +176,30 @@ export default function Products() {
                 </div>
               ))}
             </div>
-          ) : data.length === 0 ? (
+          ) : visibleData.length === 0 ? (
             <EmptyState
               icon={PackageSearch}
-              title={debouncedSearch ? 'Aramanızla eşleşen ürün bulunamadı.' : 'Henüz ürün eklenmemiş.'}
+              title={
+                criticalOnly
+                  ? 'Kritik stokta ürün yok.'
+                  : debouncedSearch
+                  ? 'Aramanızla eşleşen ürün bulunamadı.'
+                  : 'Henüz ürün eklenmemiş.'
+              }
               description={
-                debouncedSearch
+                criticalOnly
+                  ? 'Tüm ürünler yeterli stok seviyesinde.'
+                  : debouncedSearch
                   ? 'Farklı bir arama terimi deneyin.'
                   : 'İlk ürününüzü ekleyerek stok takibine başlayın.'
               }
               action={
-                !debouncedSearch ? (
+                criticalOnly ? (
+                  <Button variant="secondary" size="sm" onClick={clearCriticalFilter}>
+                    <X className="w-3.5 h-3.5" />
+                    Filtreyi temizle
+                  </Button>
+                ) : !debouncedSearch ? (
                   <Button size="sm" onClick={() => navigate('/urunler/yeni')}>
                     <Plus className="w-3.5 h-3.5" />
                     İlk ürünü ekle
@@ -173,7 +211,7 @@ export default function Products() {
             <div ref={parentRef} style={{ flex: 1, minHeight: 0, overflowY: 'auto', minWidth: '620px' }}>
               <div style={{ height: totalSize, position: 'relative', minWidth: '620px' }}>
                 {virtualItems.map((vRow) => {
-                  const p = data[vRow.index]
+                  const p = visibleData[vRow.index]
                   return (
                     <ProductRow
                       key={vRow.key}
@@ -191,9 +229,9 @@ export default function Products() {
         </div>
 
           {/* Footer */}
-          {data.length > 0 && (
+          {visibleData.length > 0 && (
             <div style={{ padding: '0.375rem 1rem', borderTop: '1px solid #f1f5f9', fontSize: '0.75rem', color: '#94a3b8', flexShrink: 0 }}>
-              {data.length.toLocaleString('tr-TR')} ürün
+              {visibleData.length.toLocaleString('tr-TR')} ürün
             </div>
           )}
         </div>

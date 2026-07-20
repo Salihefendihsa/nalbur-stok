@@ -4,6 +4,7 @@ import type { Supplier } from '@/types/database'
 
 export type SupplierInput = {
   name: string
+  contact_name: string | null
   phone: string | null
   email: string | null
   address: string | null

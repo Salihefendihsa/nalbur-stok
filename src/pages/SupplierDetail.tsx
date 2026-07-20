@@ -54,7 +54,7 @@ export default function SupplierDetail() {
   function openEditSupplier() {
     if (!supplier) return
     setSupplierForm({
-      name: supplier.name, phone: supplier.phone, email: supplier.email,
+      name: supplier.name, contact_name: supplier.contact_name, phone: supplier.phone, email: supplier.email,
       address: supplier.address, tax_no: supplier.tax_no, notes: supplier.notes,
     })
     setEditSupplierOpen(true)

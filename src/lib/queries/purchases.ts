@@ -63,7 +63,7 @@ export function useCreatePurchase() {
       const total = computeTotal(input.items)
       const { data: purchase, error: purchaseErr } = await supabase
         .from('purchases')
-        .insert({ supplier_id: input.supplier_id, invoice_no: input.invoice_no, total })
+        .insert({ supplier_id: input.supplier_id, invoice_no: input.invoice_no, total, notes: null, status: 'completed' })
         .select()
         .single()
       if (purchaseErr) throw new Error(purchaseErr.message)
@@ -74,7 +74,6 @@ export function useCreatePurchase() {
           product_id: i.product_id,
           quantity: i.quantity,
           unit_price: i.unit_price,
-          total: i.quantity * i.unit_price,
         }))
       )
       if (itemsErr) throw new Error(itemsErr.message)
@@ -120,7 +119,6 @@ export function useUpdatePurchase() {
           product_id: i.product_id,
           quantity: i.quantity,
           unit_price: i.unit_price,
-          total: i.quantity * i.unit_price,
         }))
       )
       if (itemsErr) throw new Error(itemsErr.message)

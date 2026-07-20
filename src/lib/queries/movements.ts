@@ -90,6 +90,9 @@ export function useCreateMovement() {
           quantity: input.quantity,
           note: input.note,
           reference_type: 'manual',
+          reference_id: null,
+          unit_price: null,
+          total: null,
           stock_before: before,
           stock_after: after,
         })

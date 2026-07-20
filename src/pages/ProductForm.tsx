@@ -343,7 +343,7 @@ export default function ProductForm() {
                 <select
                   className="input"
                   value={form.vat_rate}
-                  onChange={(e) => set('vat_rate', parseInt(e.target.value))}
+                  onChange={(e) => set('vat_rate', parseInt(e.target.value) as ProductInput['vat_rate'])}
                 >
                   <option value={0}>%0</option>
                   <option value={10}>%10</option>

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import type { Sale } from '@/types/database'
+import type { PaymentMethod, Sale } from '@/types/database'
 import {
   createStockMovementsForLines,
   removeStockMovementsForReference,
@@ -68,10 +68,11 @@ export function useCreateSale() {
         .from('sales')
         .insert({
           customer_name: input.customer_name,
-          payment_method: input.payment_method,
+          payment_method: input.payment_method as PaymentMethod,
           subtotal,
           vat_total,
           total,
+          notes: null,
         })
         .select()
         .single()
@@ -83,7 +84,6 @@ export function useCreateSale() {
           product_id: i.product_id,
           quantity: i.quantity,
           unit_price: i.unit_price,
-          total: i.quantity * i.unit_price,
         }))
       )
       if (itemsErr) throw new Error(itemsErr.message)
@@ -114,7 +114,7 @@ export function useUpdateSale() {
         .from('sales')
         .update({
           customer_name: input.customer_name,
-          payment_method: input.payment_method,
+          payment_method: input.payment_method as PaymentMethod,
           subtotal,
           vat_total,
           total,
@@ -135,7 +135,6 @@ export function useUpdateSale() {
           product_id: i.product_id,
           quantity: i.quantity,
           unit_price: i.unit_price,
-          total: i.quantity * i.unit_price,
         }))
       )
       if (itemsErr) throw new Error(itemsErr.message)

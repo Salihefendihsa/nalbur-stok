@@ -35,7 +35,7 @@ export type VatRate = 0 | 1 | 8 | 10 | 18 | 20
 // ─────────────────────────────────────────────────────────────────────────────
 // Tablo: categories
 // ─────────────────────────────────────────────────────────────────────────────
-export interface Category {
+export type Category = {
   id:         UUID
   name:       string
   parent_id:  UUID | null        // NULL → kök kategori
@@ -51,7 +51,7 @@ export interface Category {
 // ─────────────────────────────────────────────────────────────────────────────
 // Tablo: suppliers
 // ─────────────────────────────────────────────────────────────────────────────
-export interface Supplier {
+export type Supplier = {
   id:           UUID
   name:         string
   contact_name: string | null    // İrtibat kişisi
@@ -67,7 +67,7 @@ export interface Supplier {
 // ─────────────────────────────────────────────────────────────────────────────
 // Tablo: products
 // ─────────────────────────────────────────────────────────────────────────────
-export interface Product {
+export type Product = {
   id:             UUID
   sku:            string          // UNIQUE — stok kodu
   barcode:        string | null   // UNIQUE — EAN-13 / QR
@@ -95,7 +95,7 @@ export interface Product {
 // ─────────────────────────────────────────────────────────────────────────────
 // Tablo: stock_movements
 // ─────────────────────────────────────────────────────────────────────────────
-export interface StockMovement {
+export type StockMovement = {
   id:             UUID
   product_id:     UUID
   movement_type:  MovementType
@@ -111,13 +111,13 @@ export interface StockMovement {
   deleted_at:     ISODateTime | null
 
   // İlişkili veri (JOIN ile gelir — opsiyonel)
-  product?:       Pick<Product, 'id' | 'name' | 'unit' | 'current_stock'> | null
+  product?:       Pick<Product, 'id' | 'name' | 'sku' | 'unit' | 'current_stock'> | null
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tablo: purchases (alış faturaları — başlık)
 // ─────────────────────────────────────────────────────────────────────────────
-export interface Purchase {
+export type Purchase = {
   id:          UUID
   supplier_id: UUID | null
   invoice_no:  string | null
@@ -135,7 +135,7 @@ export interface Purchase {
 // ─────────────────────────────────────────────────────────────────────────────
 // Tablo: purchase_items (alış faturası kalemleri)
 // ─────────────────────────────────────────────────────────────────────────────
-export interface PurchaseItem {
+export type PurchaseItem = {
   id:          UUID
   purchase_id: UUID
   product_id:  UUID
@@ -151,7 +151,7 @@ export interface PurchaseItem {
 // ─────────────────────────────────────────────────────────────────────────────
 // Tablo: sales (satışlar — başlık)
 // ─────────────────────────────────────────────────────────────────────────────
-export interface Sale {
+export type Sale = {
   id:             UUID
   customer_name:  string | null   // NULL = perakende müşteri
   payment_method: PaymentMethod
@@ -169,7 +169,7 @@ export interface Sale {
 // ─────────────────────────────────────────────────────────────────────────────
 // Tablo: sale_items (satış kalemleri)
 // ─────────────────────────────────────────────────────────────────────────────
-export interface SaleItem {
+export type SaleItem = {
   id:         UUID
   sale_id:    UUID
   product_id: UUID
@@ -186,7 +186,7 @@ export interface SaleItem {
 // VIEW: kritik_stok
 // Supabase'den: const { data } = await supabase.from('kritik_stok').select('*')
 // ─────────────────────────────────────────────────────────────────────────────
-export interface KritikStokRow {
+export type KritikStokRow = {
   id:             UUID
   sku:            string
   name:           string
@@ -214,6 +214,14 @@ export interface DashboardStats {
   stockValue:      number         // toplam stok değeri (current_stock × purchase_price)
 }
 
+/**
+ * @supabase/supabase-js'in GenericTable/GenericView kısıtları her tabloda
+ * bir `Relationships` alanı bekler (FK ilişki metadatası). Bu projede
+ * ilişki metadatası üretilmediği için boş dizi olarak bırakılır — yalnızca
+ * tip seviyesinde `GenericSchema` kısıtını sağlamak için gereklidir.
+ */
+type NoRelationships = []
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Supabase veritabanı şeması tip haritası
 // Supabase client'ı oluştururken: createClient<Database>(url, key)
@@ -225,46 +233,55 @@ export interface Database {
         Row:    Category
         Insert: Omit<Category, 'id' | 'created_at' | 'deleted_at' | 'parent' | 'children'>
         Update: Partial<Omit<Category, 'id' | 'parent' | 'children'>>
+        Relationships: NoRelationships
       }
       suppliers: {
         Row:    Supplier
         Insert: Omit<Supplier, 'id' | 'created_at' | 'deleted_at'>
         Update: Partial<Omit<Supplier, 'id'>>
+        Relationships: NoRelationships
       }
       products: {
         Row:    Product
         Insert: Omit<Product, 'id' | 'created_at' | 'updated_at' | 'deleted_at' | 'category' | 'supplier'>
         Update: Partial<Omit<Product, 'id' | 'updated_at' | 'category' | 'supplier'>>
+        Relationships: NoRelationships
       }
       stock_movements: {
         Row:    StockMovement
         Insert: Omit<StockMovement, 'id' | 'created_at' | 'deleted_at' | 'product'>
         Update: Partial<Pick<StockMovement, 'note' | 'deleted_at'>>
+        Relationships: NoRelationships
       }
       purchases: {
         Row:    Purchase
         Insert: Omit<Purchase, 'id' | 'created_at' | 'deleted_at' | 'supplier' | 'items'>
         Update: Partial<Omit<Purchase, 'id' | 'supplier' | 'items'>>
+        Relationships: NoRelationships
       }
       purchase_items: {
         Row:    PurchaseItem
         Insert: Omit<PurchaseItem, 'id' | 'total' | 'product'>
         Update: never   // satır kalemleri güncellenmez; sil & yeniden ekle
+        Relationships: NoRelationships
       }
       sales: {
         Row:    Sale
         Insert: Omit<Sale, 'id' | 'created_at' | 'deleted_at' | 'items'>
         Update: Partial<Omit<Sale, 'id' | 'items'>>
+        Relationships: NoRelationships
       }
       sale_items: {
         Row:    SaleItem
         Insert: Omit<SaleItem, 'id' | 'total' | 'product'>
         Update: never   // satır kalemleri güncellenmez; sil & yeniden ekle
+        Relationships: NoRelationships
       }
     }
     Views: {
       kritik_stok: {
         Row: KritikStokRow
+        Relationships: NoRelationships
       }
     }
     Functions: Record<string, never>

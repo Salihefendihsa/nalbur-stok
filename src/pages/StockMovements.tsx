@@ -5,7 +5,7 @@ import {
   ArrowUpCircle, ArrowDownCircle, RefreshCw,
   Search, Filter, X, Package, Building2,
   ShoppingCart, ArrowRight, ChevronDown,
-  TrendingDown, Clock, ScanLine,
+  Clock, ScanLine,
 } from 'lucide-react'
 import Header from '@/components/layout/Header'
 import Button from '@/components/ui/Button'
@@ -20,7 +20,7 @@ import {
 } from '@/lib/queries/movements'
 import { useProducts } from '@/lib/queries/products'
 import { useToast } from '@/store/toast'
-import type { MovementType, Product, StockMovement } from '@/types/database'
+import type { MovementType, StockMovement } from '@/types/database'
 import { formatDateTime, formatStock, formatCurrency } from '@/utils/format'
 
 // ─────────────────────────────────────────────────────────────────────────────

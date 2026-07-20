@@ -17,6 +17,7 @@ import { formatDate } from '@/utils/format'
 
 const EMPTY_INPUT: SupplierInput = {
   name: '',
+  contact_name: null,
   phone: null,
   email: null,
   address: null,
@@ -54,7 +55,7 @@ export default function Suppliers() {
 
   function openEdit(s: Supplier) {
     setEditTarget(s)
-    setForm({ name: s.name, phone: s.phone, email: s.email, address: s.address, tax_no: s.tax_no, notes: s.notes })
+    setForm({ name: s.name, contact_name: s.contact_name, phone: s.phone, email: s.email, address: s.address, tax_no: s.tax_no, notes: s.notes })
     setNameError('')
     setFormOpen(true)
   }

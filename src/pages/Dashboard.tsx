@@ -1,4 +1,5 @@
 import { Package, AlertTriangle, ShoppingCart, TrendingUp, ArrowRightLeft } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import Header from '@/components/layout/Header'
 import PageSkeleton from '@/components/ui/PageSkeleton'
 import { useDashboardData } from '@/lib/queries/dashboard'
@@ -10,11 +11,16 @@ interface KpiCardProps {
   icon: React.ReactNode
   accentColor: string
   hint?: string
+  onClick?: () => void
 }
 
-function KpiCard({ title, value, icon, accentColor, hint }: KpiCardProps) {
+function KpiCard({ title, value, icon, accentColor, hint, onClick }: KpiCardProps) {
   return (
-    <div className="kpi-card" style={{ ['--kpi-accent' as string]: accentColor }}>
+    <div
+      className="kpi-card"
+      style={{ ['--kpi-accent' as string]: accentColor, cursor: onClick ? 'pointer' : undefined }}
+      onClick={onClick}
+    >
       <div className="flex items-center justify-between">
         <span className="text-sm text-gray-500 font-medium">{title}</span>
         <span
@@ -50,6 +56,7 @@ function greeting(hour: number): string {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate()
   const { data, isLoading, error } = useDashboardData()
   const now = new Date()
 
@@ -106,6 +113,7 @@ export default function Dashboard() {
               value={(data?.totalProducts ?? 0).toLocaleString('tr-TR')}
               icon={<Package className="w-4.5 h-4.5" />}
               accentColor="#3b82f6"
+              onClick={() => navigate('/urunler')}
             />
             <KpiCard
               title="Kritik Stok"
@@ -113,18 +121,21 @@ export default function Dashboard() {
               icon={<AlertTriangle className="w-4.5 h-4.5" />}
               accentColor="#ef4444"
               hint={data && data.lowStockCount > 0 ? 'Takviye gerekli' : 'Her şey yolunda'}
+              onClick={() => navigate('/urunler?filter=kritik')}
             />
             <KpiCard
               title="Bugünkü Satış"
               value={formatCurrency(data?.todaySalesTotal ?? 0)}
               icon={<ShoppingCart className="w-4.5 h-4.5" />}
               accentColor="#f97316"
+              onClick={() => navigate('/satis')}
             />
             <KpiCard
               title="Stok Değeri"
               value={formatCurrency(data?.stockValue ?? 0)}
               icon={<TrendingUp className="w-4.5 h-4.5" />}
               accentColor="#16a34a"
+              onClick={() => navigate('/raporlar')}
             />
           </div>
 

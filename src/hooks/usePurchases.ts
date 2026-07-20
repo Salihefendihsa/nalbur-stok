@@ -39,6 +39,7 @@ export function useAddPurchase() {
             invoice_no: input.invoice_no || null,
             total: cart.totalAmount,
             status: 'completed', // Enum değeri ile direkt tamamlandı
+            notes: null,
           })
           .select()
           .single()

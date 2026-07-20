@@ -40,6 +40,7 @@ export function useAddSale() {
             subtotal: cart.subtotal,
             vat_total: cart.totalTax,
             total: cart.totalAmount,
+            notes: null,
           })
           .select()
           .single()
