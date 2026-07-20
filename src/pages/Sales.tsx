@@ -6,6 +6,7 @@ import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
 import EmptyState from '@/components/ui/EmptyState'
 import DeletedItemsModal from '@/components/ui/DeletedItemsModal'
+import SearchableSelect from '@/components/ui/SearchableSelect'
 import {
   useSales, useCreateSale, useUpdateSale, useDeleteSale,
   useDeletedSales, useRestoreSale,
@@ -261,16 +262,13 @@ export default function Sales() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {items.map((line, idx) => (
                 <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 90px 110px 28px', gap: '0.5rem', alignItems: 'center' }}>
-                  <select
-                    className="input"
+                  <SearchableSelect
                     value={line.product_id}
-                    onChange={(e) => handleProductSelect(idx, e.target.value)}
-                  >
-                    <option value="">Ürün seçin…</option>
-                    {products.map((p) => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                  </select>
+                    onChange={(productId) => handleProductSelect(idx, productId)}
+                    placeholder="Ürün seçin…"
+                    emptyMessage="Ürün bulunamadı"
+                    options={products.map((p) => ({ value: p.id, label: p.name, sublabel: `Stok: ${p.current_stock} ${p.unit}` }))}
+                  />
                   <input
                     className="input"
                     type="number"

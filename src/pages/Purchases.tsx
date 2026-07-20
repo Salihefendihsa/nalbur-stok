@@ -1,11 +1,13 @@
-import { useState } from 'react'
-import { Plus, Edit2, Trash2, AlertTriangle, ArrowDownToLine, Archive, X } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Plus, Edit2, Trash2, AlertTriangle, ArrowDownToLine, Archive, X, ChevronDown, ChevronRight } from 'lucide-react'
 import Header from '@/components/layout/Header'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
 import EmptyState from '@/components/ui/EmptyState'
 import DeletedItemsModal from '@/components/ui/DeletedItemsModal'
+import SearchableSelect from '@/components/ui/SearchableSelect'
 import {
   usePurchases, useCreatePurchase, useUpdatePurchase, useDeletePurchase,
   useDeletedPurchases, useRestorePurchase,
@@ -16,6 +18,8 @@ import { useSuppliers } from '@/lib/queries/suppliers'
 import { useToast } from '@/store/toast'
 import type { Purchase } from '@/types/database'
 import { formatCurrency, formatDateTime } from '@/utils/format'
+
+const UNASSIGNED_KEY = '__unassigned__'
 
 function emptyLine(): PurchaseLineItemInput {
   return { product_id: '', quantity: 1, unit_price: 0 }
@@ -42,6 +46,33 @@ export default function Purchases() {
   const [deletedOpen, setDeletedOpen] = useState(false)
   const [restoringId, setRestoringId] = useState<string | null>(null)
   const { data: deletedPurchases = [], isLoading: loadingDeleted } = useDeletedPurchases(deletedOpen)
+
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
+
+  const groups = useMemo(() => {
+    const map = new Map<string, { key: string; name: string; supplierId: string | null; purchases: Purchase[] }>()
+    for (const p of purchases) {
+      const key = p.supplier_id ?? UNASSIGNED_KEY
+      if (!map.has(key)) {
+        map.set(key, {
+          key,
+          name: p.supplier?.name ?? 'Tedarikçi Belirtilmemiş',
+          supplierId: p.supplier_id,
+          purchases: [],
+        })
+      }
+      map.get(key)!.purchases.push(p)
+    }
+    return Array.from(map.values()).sort((a, b) => {
+      if (a.key === UNASSIGNED_KEY) return 1
+      if (b.key === UNASSIGNED_KEY) return -1
+      return a.name.localeCompare(b.name, 'tr')
+    })
+  }, [purchases])
+
+  function toggleGroup(key: string) {
+    setCollapsedGroups((cur) => ({ ...cur, [key]: !cur[key] }))
+  }
 
   function openCreate() {
     setEditTarget(null)
@@ -85,12 +116,16 @@ export default function Purchases() {
   }
 
   async function handleSubmit() {
+    if (!supplierId) {
+      setFormError('Önce bir tedarikçi seçilmelidir.')
+      return
+    }
     const validItems = items.filter((i) => i.product_id && i.quantity > 0)
     if (validItems.length === 0) {
       setFormError('En az bir ürün satırı eklenmelidir.')
       return
     }
-    const input: PurchaseInput = { supplier_id: supplierId || null, invoice_no: invoiceNo.trim() || null, items: validItems }
+    const input: PurchaseInput = { supplier_id: supplierId, invoice_no: invoiceNo.trim() || null, items: validItems }
     try {
       if (editTarget) {
         await updateMutation.mutateAsync({ id: editTarget.id, ...input })
@@ -143,7 +178,7 @@ export default function Purchases() {
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
       <Header
         title="Alış"
-        subtitle={isLoading ? 'Yükleniyor…' : `${purchases.length} alış`}
+        subtitle={isLoading ? 'Yükleniyor…' : `${purchases.length} alış, ${groups.length} tedarikçi`}
         actions={
           <>
             <button
@@ -161,7 +196,7 @@ export default function Purchases() {
         }
       />
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         {isLoading ? (
           <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {Array.from({ length: 5 }).map((_, i) => (
@@ -182,50 +217,83 @@ export default function Purchases() {
             />
           </div>
         ) : (
-          <div className="card">
-            <table className="table-sticky-head" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                  {['Tedarikçi', 'Fatura No', 'Ürünler', 'Toplam', 'Tarih', ''].map((h) => (
-                    <th key={h} className="bg-white" style={{ padding: '0.625rem 1rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {purchases.map((p) => (
-                  <tr key={p.id} className="table-row-alt table-row-hover" style={{ borderBottom: '1px solid #f8fafc' }}>
-                    <td style={{ padding: '0.75rem 1rem', fontWeight: 600, color: '#0f172a' }}>{p.supplier?.name ?? '—'}</td>
-                    <td style={{ padding: '0.75rem 1rem', color: '#64748b', fontFamily: 'monospace', fontSize: '0.8125rem' }}>{p.invoice_no ?? '—'}</td>
-                    <td style={{ padding: '0.75rem 1rem', color: '#64748b', maxWidth: '260px' }}>
-                      {(p.items ?? []).map((i) => i.product?.name).filter(Boolean).join(', ') || '—'}
-                    </td>
-                    <td style={{ padding: '0.75rem 1rem', fontWeight: 600, color: '#0f172a' }}>{formatCurrency(p.total)}</td>
-                    <td style={{ padding: '0.75rem 1rem', color: '#94a3b8', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
-                      {formatDateTime(p.created_at)}
-                    </td>
-                    <td style={{ padding: '0.75rem 1rem' }}>
-                      <div style={{ display: 'flex', gap: '0.375rem', justifyContent: 'flex-end' }}>
-                        <button
-                          onClick={() => openEdit(p)}
-                          style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid #e2e8f0', borderRadius: '0.375rem', cursor: 'pointer', color: '#64748b' }}
-                        >
-                          <Edit2 style={{ width: '0.875rem', height: '0.875rem' }} />
-                        </button>
-                        <button
-                          onClick={() => setDeleteTarget(p)}
-                          style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid #fecaca', borderRadius: '0.375rem', cursor: 'pointer', color: '#dc2626' }}
-                        >
-                          <Trash2 style={{ width: '0.875rem', height: '0.875rem' }} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          groups.map((group) => {
+            const collapsed = !!collapsedGroups[group.key]
+            const groupTotal = group.purchases.reduce((sum, p) => sum + p.total, 0)
+            return (
+              <div key={group.key} className="card" style={{ overflow: 'hidden' }}>
+                <button
+                  onClick={() => toggleGroup(group.key)}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '0.875rem 1rem', background: '#f8fafc', border: 'none', borderBottom: collapsed ? 'none' : '1px solid #e2e8f0',
+                    cursor: 'pointer', textAlign: 'left',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {collapsed ? <ChevronRight style={{ width: '1rem', height: '1rem', color: '#64748b' }} /> : <ChevronDown style={{ width: '1rem', height: '1rem', color: '#64748b' }} />}
+                    {group.supplierId ? (
+                      <Link
+                        to={`/tedarikciler/${group.supplierId}`}
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.9rem' }}
+                      >
+                        {group.name}
+                      </Link>
+                    ) : (
+                      <span style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.9rem' }}>{group.name}</span>
+                    )}
+                    <span className="badge-gray">{group.purchases.length} alış</span>
+                  </div>
+                  <span style={{ fontWeight: 600, color: 'var(--color-primary-600)', fontSize: '0.875rem' }}>{formatCurrency(groupTotal)}</span>
+                </button>
+
+                {!collapsed && (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                        {['Fatura No', 'Ürünler', 'Toplam', 'Tarih', ''].map((h) => (
+                          <th key={h} className="bg-white" style={{ padding: '0.625rem 1rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {group.purchases.map((p) => (
+                        <tr key={p.id} className="table-row-alt table-row-hover" style={{ borderBottom: '1px solid #f8fafc' }}>
+                          <td style={{ padding: '0.75rem 1rem', color: '#64748b', fontFamily: 'monospace', fontSize: '0.8125rem' }}>{p.invoice_no ?? '—'}</td>
+                          <td style={{ padding: '0.75rem 1rem', color: '#64748b', maxWidth: '260px' }}>
+                            {(p.items ?? []).map((i) => i.product?.name).filter(Boolean).join(', ') || '—'}
+                          </td>
+                          <td style={{ padding: '0.75rem 1rem', fontWeight: 600, color: '#0f172a' }}>{formatCurrency(p.total)}</td>
+                          <td style={{ padding: '0.75rem 1rem', color: '#94a3b8', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
+                            {formatDateTime(p.created_at)}
+                          </td>
+                          <td style={{ padding: '0.75rem 1rem' }}>
+                            <div style={{ display: 'flex', gap: '0.375rem', justifyContent: 'flex-end' }}>
+                              <button
+                                onClick={() => openEdit(p)}
+                                style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid #e2e8f0', borderRadius: '0.375rem', cursor: 'pointer', color: '#64748b' }}
+                              >
+                                <Edit2 style={{ width: '0.875rem', height: '0.875rem' }} />
+                              </button>
+                              <button
+                                onClick={() => setDeleteTarget(p)}
+                                style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid #fecaca', borderRadius: '0.375rem', cursor: 'pointer', color: '#dc2626' }}
+                              >
+                                <Trash2 style={{ width: '0.875rem', height: '0.875rem' }} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            )
+          })
         )}
       </div>
 
@@ -235,14 +303,15 @@ export default function Purchases() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
               <label style={{ fontSize: '0.75rem', fontWeight: 500, color: '#334155', display: 'block', marginBottom: '0.25rem' }}>
-                Tedarikçi
+                Tedarikçi *
               </label>
-              <select className="input" value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
-                <option value="">— Seçilmedi —</option>
-                {suppliers.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
+              <SearchableSelect
+                value={supplierId}
+                onChange={setSupplierId}
+                placeholder="Önce tedarikçi seçin…"
+                emptyMessage="Tedarikçi bulunamadı"
+                options={suppliers.map((s) => ({ value: s.id, label: s.name }))}
+              />
             </div>
             <Input
               label="Fatura No"
@@ -252,23 +321,23 @@ export default function Purchases() {
             />
           </div>
 
-          <div>
+          <div style={{ opacity: supplierId ? 1 : 0.5, pointerEvents: supplierId ? 'auto' : 'none' }}>
             <label style={{ fontSize: '0.75rem', fontWeight: 500, color: '#334155', display: 'block', marginBottom: '0.5rem' }}>
               Ürünler *
             </label>
+            {!supplierId && (
+              <p style={{ margin: '0 0 0.5rem', fontSize: '0.8125rem', color: '#94a3b8' }}>Ürün eklemeden önce bir tedarikçi seçin.</p>
+            )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {items.map((line, idx) => (
                 <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 90px 110px 28px', gap: '0.5rem', alignItems: 'center' }}>
-                  <select
-                    className="input"
+                  <SearchableSelect
                     value={line.product_id}
-                    onChange={(e) => handleProductSelect(idx, e.target.value)}
-                  >
-                    <option value="">Ürün seçin…</option>
-                    {products.map((p) => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                  </select>
+                    onChange={(productId) => handleProductSelect(idx, productId)}
+                    placeholder="Ürün seçin…"
+                    emptyMessage="Ürün bulunamadı"
+                    options={products.map((p) => ({ value: p.id, label: p.name, sublabel: `Stok: ${p.current_stock} ${p.unit}` }))}
+                  />
                   <input
                     className="input"
                     type="number"
@@ -299,8 +368,8 @@ export default function Purchases() {
             >
               <Plus className="w-3.5 h-3.5" /> Satır ekle
             </button>
-            {formError && <p style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#dc2626' }}>{formError}</p>}
           </div>
+          {formError && <p style={{ margin: 0, fontSize: '0.75rem', color: '#dc2626' }}>{formError}</p>}
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1.5rem', padding: '0.75rem 0', borderTop: '1px solid #f1f5f9', fontSize: '0.875rem' }}>
             <span style={{ color: '#64748b' }}>Toplam: <strong style={{ color: 'var(--color-primary-600)' }}>{formatCurrency(linesTotal)}</strong></span>

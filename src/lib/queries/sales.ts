@@ -1,6 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { Sale } from '@/types/database'
+import {
+  createStockMovementsForLines,
+  removeStockMovementsForReference,
+  reverseStockMovementsForReference,
+  reapplyStockMovementsForReference,
+} from './stockHelpers'
 
 export type SaleLineItemInput = {
   product_id: string
@@ -82,9 +88,20 @@ export function useCreateSale() {
       )
       if (itemsErr) throw new Error(itemsErr.message)
 
+      await createStockMovementsForLines(input.items, {
+        movement_type: 'out',
+        reference_type: 'sale',
+        reference_id: sale.id,
+      })
+
       return sale as Sale
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['sales'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sales'] })
+      qc.invalidateQueries({ queryKey: ['products'] })
+      qc.invalidateQueries({ queryKey: ['movements'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
   })
 }
 
@@ -107,6 +124,8 @@ export function useUpdateSale() {
         .single()
       if (saleErr) throw new Error(saleErr.message)
 
+      await removeStockMovementsForReference('sale', id)
+
       const { error: deleteErr } = await supabase.from('sale_items').delete().eq('sale_id', id)
       if (deleteErr) throw new Error(deleteErr.message)
 
@@ -121,9 +140,20 @@ export function useUpdateSale() {
       )
       if (itemsErr) throw new Error(itemsErr.message)
 
+      await createStockMovementsForLines(input.items, {
+        movement_type: 'out',
+        reference_type: 'sale',
+        reference_id: id,
+      })
+
       return sale as Sale
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['sales'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sales'] })
+      qc.invalidateQueries({ queryKey: ['products'] })
+      qc.invalidateQueries({ queryKey: ['movements'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
   })
 }
 
@@ -131,13 +161,19 @@ export function useDeleteSale() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
+      await reverseStockMovementsForReference('sale', id)
       const { error } = await supabase
         .from('sales')
         .update({ deleted_at: new Date().toISOString() })
         .eq('id', id)
       if (error) throw new Error(error.message)
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['sales'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sales'] })
+      qc.invalidateQueries({ queryKey: ['products'] })
+      qc.invalidateQueries({ queryKey: ['movements'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
   })
 }
 
@@ -150,7 +186,13 @@ export function useRestoreSale() {
         .update({ deleted_at: null })
         .eq('id', id)
       if (error) throw new Error(error.message)
+      await reapplyStockMovementsForReference('sale', id)
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['sales'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sales'] })
+      qc.invalidateQueries({ queryKey: ['products'] })
+      qc.invalidateQueries({ queryKey: ['movements'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
   })
 }

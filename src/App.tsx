@@ -7,6 +7,7 @@ import ProductDetail from '@/pages/ProductDetail'
 import ProductForm from '@/pages/ProductForm'
 import Categories from '@/pages/Categories'
 import Suppliers from '@/pages/Suppliers'
+import SupplierDetail from '@/pages/SupplierDetail'
 import StockMovements from '@/pages/StockMovements'
 import Sales from '@/pages/Sales'
 import Purchases from '@/pages/Purchases'
@@ -36,6 +37,7 @@ export default function App() {
             <Route path="urunler/:id/duzenle" element={<ProductForm />} />
             <Route path="kategoriler" element={<Categories />} />
             <Route path="tedarikciler" element={<Suppliers />} />
+            <Route path="tedarikciler/:id" element={<SupplierDetail />} />
             <Route path="satis" element={<Sales />} />
             <Route path="alis" element={<Purchases />} />
             <Route path="hareketler" element={<StockMovements />} />

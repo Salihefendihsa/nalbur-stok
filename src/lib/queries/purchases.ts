@@ -1,6 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { Purchase } from '@/types/database'
+import {
+  createStockMovementsForLines,
+  removeStockMovementsForReference,
+  reverseStockMovementsForReference,
+  reapplyStockMovementsForReference,
+} from './stockHelpers'
 
 export type PurchaseLineItemInput = {
   product_id: string
@@ -73,9 +79,20 @@ export function useCreatePurchase() {
       )
       if (itemsErr) throw new Error(itemsErr.message)
 
+      await createStockMovementsForLines(input.items, {
+        movement_type: 'in',
+        reference_type: 'purchase',
+        reference_id: purchase.id,
+      })
+
       return purchase as Purchase
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['purchases'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['purchases'] })
+      qc.invalidateQueries({ queryKey: ['products'] })
+      qc.invalidateQueries({ queryKey: ['movements'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
   })
 }
 
@@ -92,6 +109,8 @@ export function useUpdatePurchase() {
         .single()
       if (purchaseErr) throw new Error(purchaseErr.message)
 
+      await removeStockMovementsForReference('purchase', id)
+
       const { error: deleteErr } = await supabase.from('purchase_items').delete().eq('purchase_id', id)
       if (deleteErr) throw new Error(deleteErr.message)
 
@@ -106,9 +125,20 @@ export function useUpdatePurchase() {
       )
       if (itemsErr) throw new Error(itemsErr.message)
 
+      await createStockMovementsForLines(input.items, {
+        movement_type: 'in',
+        reference_type: 'purchase',
+        reference_id: id,
+      })
+
       return purchase as Purchase
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['purchases'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['purchases'] })
+      qc.invalidateQueries({ queryKey: ['products'] })
+      qc.invalidateQueries({ queryKey: ['movements'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
   })
 }
 
@@ -116,13 +146,19 @@ export function useDeletePurchase() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
+      await reverseStockMovementsForReference('purchase', id)
       const { error } = await supabase
         .from('purchases')
         .update({ deleted_at: new Date().toISOString() })
         .eq('id', id)
       if (error) throw new Error(error.message)
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['purchases'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['purchases'] })
+      qc.invalidateQueries({ queryKey: ['products'] })
+      qc.invalidateQueries({ queryKey: ['movements'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
   })
 }
 
@@ -135,7 +171,13 @@ export function useRestorePurchase() {
         .update({ deleted_at: null })
         .eq('id', id)
       if (error) throw new Error(error.message)
+      await reapplyStockMovementsForReference('purchase', id)
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['purchases'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['purchases'] })
+      qc.invalidateQueries({ queryKey: ['products'] })
+      qc.invalidateQueries({ queryKey: ['movements'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
   })
 }

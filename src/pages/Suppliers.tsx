@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Plus, Edit2, Trash2, AlertTriangle, Phone, Mail, MapPin, Archive } from 'lucide-react'
 import Header from '@/components/layout/Header'
 import Button from '@/components/ui/Button'
@@ -161,7 +162,9 @@ export default function Suppliers() {
                 {suppliers.map((s) => (
                   <tr key={s.id} style={{ borderBottom: '1px solid #f8fafc' }}>
                     <td style={{ padding: '0.75rem 1rem' }}>
-                      <p style={{ margin: 0, fontWeight: 600, color: '#0f172a' }}>{s.name}</p>
+                      <Link to={`/tedarikciler/${s.id}`} style={{ margin: 0, fontWeight: 600, color: '#0f172a', textDecoration: 'none' }}>
+                        {s.name}
+                      </Link>
                       {s.address && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.25rem', color: '#94a3b8' }}>
                           <MapPin style={{ width: '0.75rem', height: '0.75rem' }} />

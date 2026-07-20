@@ -26,6 +26,22 @@ export function useSuppliers() {
   })
 }
 
+export function useSupplier(id: string | undefined) {
+  return useQuery({
+    queryKey: ['suppliers', 'detail', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('suppliers')
+        .select('*')
+        .eq('id', id as string)
+        .single()
+      if (error) throw new Error(error.message)
+      return data as Supplier
+    },
+    enabled: !!id,
+  })
+}
+
 export function useDeletedSuppliers(enabled = true) {
   return useQuery({
     queryKey: ['suppliers', 'deleted'],
