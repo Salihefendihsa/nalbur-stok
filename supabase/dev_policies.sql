@@ -1,4 +1,5 @@
--- Development-only permissive policies: allow the anon role full access.
+-- SUPERSEDED by supabase/migrations/0002_authenticated_rls.sql — do not re-run this file.
+-- Kept only for history. Development-only permissive policies: allow the anon role full access.
 -- This app has no authentication yet; tighten these before going to production.
 
 alter table categories enable row level security;
